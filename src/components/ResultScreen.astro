@@ -1,0 +1,38 @@
+---
+// ResultScreen.astro
+// 結果画面コンポーネント
+---
+
+<div class="screen result-screen" data-screen="result" style="display: none;">
+  <div class="panel">
+    <h2 class="section-title">けっか 💖</h2>
+    <p id="result-summary" class="result-summary"></p>
+    <p id="result-detail" class="result-detail"></p>
+    <div class="button-row">
+      <button class="btn primary" data-action="retry">もういっかい 🎈</button>
+      <button class="btn" data-action="back-level">れべるを かえる 🌿</button>
+      <button class="btn" data-action="back-start">おうちに もどる 🏠</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .result-screen {
+    width: 100%;
+  }
+
+  .result-summary {
+    font-size: 1.3rem;
+    text-align: center;
+    margin: 4px 0 8px;
+    color: var(--text-main);
+  }
+
+  .result-detail {
+    font-size: 0.98rem;
+    text-align: center;
+    color: var(--text-subtle);
+    margin-bottom: 16px;
+  }
+</style>
+

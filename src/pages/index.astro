@@ -1,0 +1,28 @@
+---
+// index.astro
+// 全てのコンポーネントを読み込み、表示を切り替えるメインファイル
+import BaseLayout from '../layouts/BaseLayout.astro';
+import StartScreen from '../components/StartScreen.astro';
+import HowToScreen from '../components/HowToScreen.astro';
+import LevelSelect from '../components/LevelSelect.astro';
+import GameScreen from '../components/GameScreen.astro';
+import ResultScreen from '../components/ResultScreen.astro';
+---
+
+<BaseLayout>
+  <StartScreen />
+  <HowToScreen />
+  <LevelSelect />
+  <GameScreen />
+  <ResultScreen />
+</BaseLayout>
+
+<script>
+  import { GameController } from '../scripts/gameController.js';
+  
+  // DOMContentLoaded後にゲームコントローラーを初期化
+  document.addEventListener('DOMContentLoaded', () => {
+    new GameController();
+  });
+</script>
+

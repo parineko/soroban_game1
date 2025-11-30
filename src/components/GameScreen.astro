@@ -1,0 +1,131 @@
+---
+// GameScreen.astro
+// ゲーム画面コンポーネント
+import AbacusDisplay from './AbacusDisplay.astro';
+import Keypad from './Keypad.astro';
+---
+
+<div class="screen game-screen" data-screen="game" style="display: none;">
+  <div class="panel game-panel">
+    <div class="game-header">
+      <p id="level-label" class="badge">れべる：しょきゅう 🌸</p>
+      <p id="question-counter" class="badge">もんすう：1 / 10</p>
+    </div>
+
+    <div id="abacus-area" class="abacus-area">
+      <!-- そろばんが JS で そうにゅうされます -->
+    </div>
+
+    <div class="instruction-box">
+      <p class="instruction">
+        そろばんの かずを おぼえて<br>
+        したの でんたくで こたえを いれてね 💡
+      </p>
+    </div>
+
+    <div class="answer-area">
+      <div class="answer-label">こたえ 🐾</div>
+      <div id="answer-display" class="answer-display"></div>
+    </div>
+
+    <Keypad />
+
+    <div id="feedback" class="feedback"></div>
+
+    <div class="button-row bottom-row">
+      <button class="btn" data-action="give-up">あきらめる…🏠</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .game-screen {
+    width: 100%;
+  }
+
+  .game-panel {
+    padding-bottom: 14px;
+  }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .badge {
+    background: #f7ebdb;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.82rem;
+    color: var(--text-subtle);
+  }
+
+  .abacus-area {
+    margin: 10px auto 12px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .instruction-box {
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  .instruction {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-main);
+  }
+
+  .answer-area {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .answer-label {
+    font-size: 0.9rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f7ebdb;
+    color: var(--text-main);
+  }
+
+  .answer-display {
+    flex: 1;
+    min-height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--border-soft);
+    background: #fff9f0;
+    display: flex;
+    align-items: center;
+    padding: 4px 10px;
+    font-size: 1.2rem;
+    color: var(--text-main);
+  }
+
+  .feedback {
+    margin-top: 10px;
+    min-height: 32px;
+    text-align: center;
+    font-size: 1.05rem;
+  }
+
+  .feedback.success {
+    color: var(--success);
+  }
+
+  .feedback.error {
+    color: var(--danger);
+  }
+
+  .bottom-row {
+    margin-top: 10px;
+  }
+</style>
+

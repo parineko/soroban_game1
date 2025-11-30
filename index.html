@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>そろばん きらきらレッスン ✨</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>そろばん きらきらレッスン ✨</h1>
+      <p class="subtitle">ぱっと ひょうじされる そろばんを よんでみよう 🐾</p>
+    </header>
+
+    <main class="app-main">
+      <!-- スタート画面 -->
+      <section id="screen-start" class="screen active">
+        <div class="panel">
+          <p class="big-copy">こんにちは 👋</p>
+          <p class="text">
+            ちいさな そろばんの おけいこ アプリだよ 🎀<br>
+            ぱっと ひょうじされる そろばんの かずを よんで<br>
+            したの でんたくで こたえを いれてみよう ✨
+          </p>
+          <div class="button-row">
+            <button class="btn primary" data-action="go-howto">あそびかた 💡</button>
+            <button class="btn" data-action="go-level">すぐ はじめる 🎈</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- あそびかた画面 -->
+      <section id="screen-howto" class="screen">
+        <div class="panel">
+          <h2 class="section-title">あそびかた 🐾</h2>
+          <ul class="howto-list">
+            <li>🎈 そろばんが ぱっと ひょうじされるよ</li>
+            <li>💫 すぐに きえちゃうから よーく みてね</li>
+            <li>💖 なんの かず だったかを おもいだしてね</li>
+            <li>📱 したの でんたくボタンで こたえを いれて</li>
+            <li>✨ 「けってい」ボタンで こたえあわせ するよ</li>
+          </ul>
+          <p class="small-note">
+            ※ もじは すべて ひらがなで、<br>
+            ちいさい おともだちも よみやすく なっています 🌸
+          </p>
+          <div class="button-row">
+            <button class="btn" data-action="back-start">もどる 🏠</button>
+            <button class="btn primary" data-action="go-level">れべるを えらぶ 🎀</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- レベル選択画面 -->
+      <section id="screen-level" class="screen">
+        <div class="panel">
+          <h2 class="section-title">れべるを えらんでね 🎀</h2>
+          <div class="level-list">
+            <button class="btn level-btn" data-level="easy">
+              しょきゅう 🌸<br>
+              <span class="level-note">（1けた・ひょうじ 2びょう）</span>
+            </button>
+            <button class="btn level-btn" data-level="normal">
+              ちゅうきゅう 🌿<br>
+              <span class="level-note">（2けた・ひょうじ 1.5びょう）</span>
+            </button>
+            <button class="btn level-btn" data-level="hard">
+              じょうきゅう ✨<br>
+              <span class="level-note">（3けた・ひょうじ 1びょう）</span>
+            </button>
+          </div>
+          <p class="small-note">
+            うすい もじは、おとなの かたむけの せつめいです 🍵
+          </p>
+          <div class="button-row">
+            <button class="btn" data-action="back-start">おうちに もどる 🏠</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ゲーム画面 -->
+      <section id="screen-game" class="screen">
+        <div class="panel game-panel">
+          <div class="game-header">
+            <p id="level-label" class="badge">れべる：しょきゅう 🌸</p>
+            <p id="question-counter" class="badge">もんすう：1 / 10</p>
+          </div>
+          <div id="abacus-area" class="abacus-area"></div>
+          <div class="instruction-box">
+            <p class="instruction">
+              そろばんの かずを おぼえて<br>
+              したの でんたくで こたえを いれてね 💡
+            </p>
+          </div>
+          <div class="answer-area">
+            <div class="answer-label">こたえ 🐾</div>
+            <div id="answer-display" class="answer-display"></div>
+          </div>
+          <div class="keypad">
+            <div class="keypad-row">
+              <button class="key-btn" data-key="7">7</button>
+              <button class="key-btn" data-key="8">8</button>
+              <button class="key-btn" data-key="9">9</button>
+            </div>
+            <div class="keypad-row">
+              <button class="key-btn" data-key="4">4</button>
+              <button class="key-btn" data-key="5">5</button>
+              <button class="key-btn" data-key="6">6</button>
+            </div>
+            <div class="keypad-row">
+              <button class="key-btn" data-key="1">1</button>
+              <button class="key-btn" data-key="2">2</button>
+              <button class="key-btn" data-key="3">3</button>
+            </div>
+            <div class="keypad-row">
+              <button class="key-btn wide" data-key="0">0</button>
+              <button class="key-btn sub" data-key="del">けす</button>
+              <button class="key-btn main" data-key="enter">けってい ✨</button>
+            </div>
+          </div>
+          <div id="feedback" class="feedback"></div>
+          <div class="button-row bottom-row">
+            <button class="btn" data-action="give-up">あきらめる…🏠</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 結果画面 -->
+      <section id="screen-result" class="screen">
+        <div class="panel">
+          <h2 class="section-title">けっか 💖</h2>
+          <p id="result-summary" class="result-summary"></p>
+          <p id="result-detail" class="result-detail"></p>
+          <div class="button-row">
+            <button class="btn primary" data-action="retry">もういっかい 🎈</button>
+            <button class="btn" data-action="back-level">れべるを かえる 🌿</button>
+            <button class="btn" data-action="back-start">おうちに もどる 🏠</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      ちいさな そろばんの おけいこアプリ 🎀
+    </footer>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/abacus.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,53 @@
+---
+// LevelSelect.astro
+// レベル選択画面コンポーネント
+---
+
+<div class="screen level-screen" data-screen="level" style="display: none;">
+  <div class="panel">
+    <h2 class="section-title">れべるを えらんでね 🎀</h2>
+    <div class="level-list">
+      <button class="btn level-btn" data-level="easy">
+        しょきゅう 🌸<br>
+        <span class="level-note">（1けた・ひょうじ 2びょう）</span>
+      </button>
+      <button class="btn level-btn" data-level="normal">
+        ちゅうきゅう 🌿<br>
+        <span class="level-note">（2けた・ひょうじ 1.5びょう）</span>
+      </button>
+      <button class="btn level-btn" data-level="hard">
+        じょうきゅう ✨<br>
+        <span class="level-note">（3けた・ひょうじ 1びょう）</span>
+      </button>
+    </div>
+    <p class="small-note">
+      うすい もじは、おとなの かたむけの せつめいです 🍵
+    </p>
+    <div class="button-row">
+      <button class="btn" data-action="back-start">おうちに もどる 🏠</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .level-screen {
+    width: 100%;
+  }
+
+  .level-list {
+    margin-top: 8px;
+  }
+
+  .btn.level-btn {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .level-note {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-subtle);
+    margin-top: 4px;
+  }
+</style>
+

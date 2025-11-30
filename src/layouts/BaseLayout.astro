@@ -1,0 +1,79 @@
+---
+// BaseLayout.astro
+// 共通レイアウト（背景色・フォント・余白・フッター）
+---
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="generator" content={Astro.generator} />
+  <title>そろばん きらきらレッスン ✨</title>
+  <link rel="stylesheet" href="/src/styles/global.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>そろばん きらきらレッスン ✨</h1>
+      <p class="subtitle">ぱっと ひょうじされる そろばんを よんでみよう 🐾</p>
+    </header>
+
+    <main class="app-main">
+      <slot />
+    </main>
+
+    <footer class="app-footer">
+      ちいさな そろばんの おけいこアプリ 🎀
+    </footer>
+  </div>
+</body>
+</html>
+
+<style>
+  .app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-cream);
+  }
+
+  .app-header {
+    text-align: center;
+    padding: 16px 12px 8px;
+    width: 100%;
+  }
+
+  .app-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: var(--text-main);
+  }
+
+  .subtitle {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: var(--text-subtle);
+  }
+
+  .app-main {
+    flex: 1;
+    width: 100%;
+    max-width: 520px;
+    padding: 8px 12px 24px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  .app-footer {
+    font-size: 0.8rem;
+    color: var(--text-subtle);
+    padding: 4px 0 10px;
+    text-align: center;
+    width: 100%;
+  }
+</style>
+

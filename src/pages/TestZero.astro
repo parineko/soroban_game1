@@ -1,0 +1,147 @@
+---
+import AbacusDisplay from "../components/AbacusDisplay.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// 初期値は0（クライアントサイドで更新される）
+const initialValue = 0;
+const initialDigits = 4;
+---
+
+<BaseLayout>
+<div style="padding: 20px; background: white; min-height: 100vh;">
+  <h1 style="text-align: center; font-size: 2rem; margin-bottom: 20px;">そろばん入力テスト</h1>
+  
+  <div style="display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 40px;">
+    <!-- そろばん表示エリア（上） -->
+    <div style="text-align: center;">
+      <div id="abacusContainer">
+        <AbacusDisplay value={initialValue} digits={initialDigits} />
+      </div>
+    </div>
+    
+    <!-- 入力欄（下） -->
+    <div style="text-align: center;">
+      <label style="display: block; font-size: 1.2rem; margin-bottom: 10px; font-weight: bold;">
+        4桁の数字を入力してください (0-9999):
+      </label>
+      <input
+        id="numberInput"
+        type="number"
+        min="0"
+        max="9999"
+        placeholder="0000"
+        style="padding: 10px; font-size: 1.5rem; text-align: center; width: 200px; border: 2px solid #333; border-radius: 5px;"
+      />
+      <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">数字を入力すると自動で表示されます</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // AbacusDisplayのロジックをクライアントサイドで再現
+  const rodX = [62, 184, 306, 428];
+  const tamaWidth = 108;
+  const tamaOffsetX = tamaWidth / 2;
+  const upperRestY = 106;
+  const upperActiveY = 141;
+  const lowerRestY = 469;
+  const lowerActiveStartY = 229;
+  const lowerGap = 65;
+
+  function getDigit(value, digits, col) {
+    const str = value.toString().padStart(digits, "0");
+    const digitArray = Array.from(str).map(char => parseInt(char, 10));
+    const rightToLeftIndex = 3 - col;
+    const arrayIndex = digits - 1 - rightToLeftIndex;
+    return arrayIndex >= 0 && arrayIndex < digitArray.length ? digitArray[arrayIndex] : 0;
+  }
+
+  function getUpperY(value, digits, col) {
+    const digit = getDigit(value, digits, col);
+    return digit >= 5 ? upperActiveY : upperRestY;
+  }
+
+  function getLowerY(value, digits, col, row) {
+    const digit = getDigit(value, digits, col);
+    const ones = digit % 5;
+    if (row < ones) {
+      return lowerActiveStartY + row * lowerGap;
+    }
+    return lowerRestY - (3 - row) * lowerGap;
+  }
+
+  function updateAbacus(value) {
+    const digits = value.toString().length;
+    const maxDigits = Math.max(digits, 4);
+
+    // 玉の位置を更新
+    for (let col = 0; col < 4; col++) {
+      // 上玉
+      const upperBead = document.querySelector(`.tama.upper.U${col}`);
+      if (upperBead) {
+        const y = getUpperY(value, maxDigits, col);
+        upperBead.style.left = `${rodX[col] - tamaOffsetX}px`;
+        upperBead.style.top = `${y}px`;
+      }
+
+      // 下玉
+      for (let row = 0; row < 4; row++) {
+        const lowerBead = document.querySelector(`.tama.lower.L${col}_${row}`);
+        if (lowerBead) {
+          const y = getLowerY(value, maxDigits, col, row);
+          lowerBead.style.left = `${rodX[col] - tamaOffsetX}px`;
+          lowerBead.style.top = `${y}px`;
+        }
+      }
+    }
+  }
+
+  // DOMContentLoadedを待つ
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('numberInput');
+    
+    // URLパラメータから初期値を設定
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlValue = urlParams.get('value');
+    const initialValue = urlValue ? parseInt(urlValue) || 0 : 0;
+    
+    console.log('[Client] Initial URL value:', urlValue, 'Initial value:', initialValue);
+    
+    if (input) {
+      input.value = initialValue.toString();
+    }
+    
+    // 初期値をそろばんに反映
+    updateAbacus(initialValue);
+    
+    // 入力欄の値をリアルタイムでモニター
+    input?.addEventListener('input', (e) => {
+      const inputValue = input.value.trim();
+      if (inputValue === '') {
+        updateAbacus(0);
+        return;
+      }
+      const value = parseInt(inputValue, 10);
+      if (!isNaN(value)) {
+        const clampedValue = Math.max(0, Math.min(9999, value));
+        // そろばんをリアルタイムで更新
+        updateAbacus(clampedValue);
+        
+        // URLパラメータを更新（ページリロードなし）
+        const baseUrl = window.location.origin + window.location.pathname;
+        window.history.pushState({}, '', `${baseUrl}?value=${clampedValue}`);
+      }
+    });
+  });
+</script>
+
+<style>
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+</style>
+</div>
+</BaseLayout>
+
