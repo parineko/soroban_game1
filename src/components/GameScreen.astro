@@ -11,8 +11,6 @@
         <p id="question-counter" class="badge">もんすう：1 / 10</p>
       </div>
       <div class="game-header-right">
-        <button class="btn-fullscreen" id="fullscreen-btn" aria-label="全画面表示">⛶ ぜんがめん</button>
-        <button class="btn-exit-fullscreen" id="exit-fullscreen-btn" aria-label="全画面を解除" style="display: none;">✕ もどる</button>
         <button class="btn-back" data-action="give-up" aria-label="ホームに戻る">もどる 🏠</button>
       </div>
     </div>
@@ -554,51 +552,5 @@
     }
   });
 
-  // 全画面表示機能
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error('全画面表示に失敗:', err);
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  }
-
-  function updateFullscreenButtons() {
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
-    const isFullscreen = !!document.fullscreenElement;
-    
-    if (fullscreenBtn && exitFullscreenBtn) {
-      if (isFullscreen) {
-        fullscreenBtn.style.display = 'none';
-        exitFullscreenBtn.style.display = 'inline-block';
-      } else {
-        fullscreenBtn.style.display = 'inline-block';
-        exitFullscreenBtn.style.display = 'none';
-      }
-    }
-  }
-
-  // ボタンのクリックイベント
-  document.addEventListener('DOMContentLoaded', () => {
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
-    
-    if (fullscreenBtn) {
-      fullscreenBtn.style.display = 'inline-block';
-      fullscreenBtn.addEventListener('click', toggleFullscreen);
-    }
-    
-    if (exitFullscreenBtn) {
-      exitFullscreenBtn.style.display = 'none';
-      exitFullscreenBtn.addEventListener('click', toggleFullscreen);
-    }
-    
-    // 全画面状態の変更を監視
-    document.addEventListener('fullscreenchange', updateFullscreenButtons);
-    updateFullscreenButtons();
-  });
 </script>
 
