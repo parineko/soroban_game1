@@ -67,15 +67,19 @@ export class GameController {
     this.abacusDisplayContainer = getElementSafely("abacus-display-container");
     this.countdownElement = getElementSafely("countdown");
     
-    // そろばんの座標設定（AbacusDisplay.astroと同じ値）
-    this.rodX = [62, 184, 306, 428]; // 4本の棒の中心X座標
-    this.tamaWidth = 108; // 玉画像の幅
-    this.tamaOffsetX = this.tamaWidth / 2; // 玉の中心を棒の中心に合わせるオフセット
-    this.upperRestY = 106; // 上玉の休み位置（一番上）
-    this.upperActiveY = 141; // 上玉のアクティブ位置（梁に寄る）
-    this.lowerRestY = 469; // 下玉の休み位置（一番下）
-    this.lowerActiveStartY = 229; // 下玉のアクティブ開始位置（梁のすぐ下）
-    this.lowerGap = 65; // 下玉の上下間隔
+    // そろばんの座標設定（TestZero.astroと同じ値に統一、pxベース）
+    // 基準サイズ: 500px × 700px
+    this.baseWidth = 500;
+    this.baseHeight = 700;
+    this.rodX = [61, 185, 308, 432]; // 4本の棒の中心X座標（px、TestZero.astroと同じ）
+    this.tamaWidth = 108; // 玉画像の幅（px、TestZero.astroと同じ）
+    this.tamaHeight = 70; // 玉画像の高さ（px、TestZero.astroと同じ）
+    this.tamaOffsetX = this.tamaWidth / 2; // 玉の中心を棒の中心に合わせるオフセット（px）
+    this.upperRestY = 80; // 上玉の休み位置（px、TestZero.astroと同じ）
+    this.upperActiveY = 117; // 上玉のアクティブ位置（px、TestZero.astroと同じ）
+    this.lowerRestY = 448; // 下玉の休み位置（px、TestZero.astroと同じ）
+    this.lowerActiveStartY = 205; // 下玉のアクティブ開始位置（px、TestZero.astroと同じ）
+    this.lowerGap = 65; // 下玉の上下間隔（px、TestZero.astroと同じ）
     
     this.init();
   }
@@ -85,11 +89,13 @@ export class GameController {
    */
   init() {
     this.setupEventListeners();
-    this.setupContinuousChangeButtons();
     
     // 長押し用のタイマー
     this.continuousChangeTimer = null;
     this.continuousChangeInterval = null;
+    this.continuousButtonsSetup = false;
+    
+    this.setupContinuousChangeButtons();
   }
 
   /**
@@ -125,16 +131,8 @@ export class GameController {
         return;
       }
 
-      // 数字の増減ボタンの処理（クリック時は1回だけ実行）
+      // 数字の増減ボタンは setupContinuousChangeButtons() で処理するため、ここでは処理しない
       if (button.id === "scroll-up" || button.id === "scroll-down") {
-        event.preventDefault();
-        if (button.id === "scroll-up") {
-          this.incrementAnswer();
-        } else {
-          this.decrementAnswer();
-        }
-        // 長押し処理を開始
-        this.startContinuousChange(button.id);
         return;
       }
     });
@@ -309,6 +307,12 @@ export class GameController {
       this.feedback.className = "feedback";
     }
     
+    // 説明文を元に戻す
+    const instructionText = getElementSafely("instruction-text");
+    if (instructionText) {
+      instructionText.innerHTML = "そろばんの かずを おぼえて<br>みぎの でんたくで こたえを いれてね 💡";
+    }
+    
     // そろばんを描画（AbacusDisplayコンポーネントを使用）
     if (this.abacusDisplayContainer) {
       this.createAbacusDisplay(this.currentAnswer, digits);
@@ -382,6 +386,13 @@ export class GameController {
     }
 
     if (key === "enter") {
+      // 答え合わせ後は次の問題へ進む
+      if (!this.waitingAnswer && this.questionIndex > 0) {
+        this.nextQuestion();
+        return;
+      }
+      
+      // 答えをチェック
       if (!this.waitingAnswer) {
         return;
       }
@@ -457,59 +468,87 @@ export class GameController {
    * 長押し用のボタンイベント設定
    */
   setupContinuousChangeButtons() {
+    // 既に設定済みの場合はスキップ（重複防止）
+    if (this.continuousButtonsSetup) {
+      return;
+    }
+    this.continuousButtonsSetup = true;
+
     // DOM要素が存在するまで待機
     setTimeout(() => {
-      const scrollUpBtn = document.getElementById("scroll-up");
-      const scrollDownBtn = document.getElementById("scroll-down");
+      const scrollUpBtn = getElementSafely("scroll-up");
+      const scrollDownBtn = getElementSafely("scroll-down");
 
       if (scrollUpBtn) {
+        // 長押し用のmousedownイベント（クリック時も1回実行される）
         scrollUpBtn.addEventListener("mousedown", (e) => {
           e.preventDefault();
+          e.stopPropagation();
           this.incrementAnswer();
           this.startContinuousChange("scroll-up");
         });
-        scrollUpBtn.addEventListener("mouseup", () => {
+        scrollUpBtn.addEventListener("mouseup", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
-        scrollUpBtn.addEventListener("mouseleave", () => {
+        scrollUpBtn.addEventListener("mouseleave", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
         // タッチデバイス対応
         scrollUpBtn.addEventListener("touchstart", (e) => {
           e.preventDefault();
+          e.stopPropagation();
           this.incrementAnswer();
           this.startContinuousChange("scroll-up");
         });
-        scrollUpBtn.addEventListener("touchend", () => {
+        scrollUpBtn.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
-        scrollUpBtn.addEventListener("touchcancel", () => {
+        scrollUpBtn.addEventListener("touchcancel", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
       }
 
       if (scrollDownBtn) {
+        // 長押し用のmousedownイベント（クリック時も1回実行される）
         scrollDownBtn.addEventListener("mousedown", (e) => {
           e.preventDefault();
+          e.stopPropagation();
           this.decrementAnswer();
           this.startContinuousChange("scroll-down");
         });
-        scrollDownBtn.addEventListener("mouseup", () => {
+        scrollDownBtn.addEventListener("mouseup", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
-        scrollDownBtn.addEventListener("mouseleave", () => {
+        scrollDownBtn.addEventListener("mouseleave", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
         // タッチデバイス対応
         scrollDownBtn.addEventListener("touchstart", (e) => {
           e.preventDefault();
+          e.stopPropagation();
           this.decrementAnswer();
           this.startContinuousChange("scroll-down");
         });
-        scrollDownBtn.addEventListener("touchend", () => {
+        scrollDownBtn.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
-        scrollDownBtn.addEventListener("touchcancel", () => {
+        scrollDownBtn.addEventListener("touchcancel", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.stopContinuousChange();
         });
       }
@@ -555,8 +594,42 @@ export class GameController {
    * 答えをチェック
    */
   checkAnswer() {
-    const userValue = parseInt(this.answerText, 10);
-    const correct = userValue === this.currentAnswer;
+    // 空の答えの場合は不正解として処理
+    const trimmedAnswer = this.answerText.trim();
+    let userValue;
+    let correct;
+    
+    if (trimmedAnswer === "") {
+      // 答えが空の場合は常に不正解
+      userValue = NaN;
+      correct = false;
+    } else {
+      // 数値に変換してチェック
+      userValue = parseInt(trimmedAnswer, 10);
+      // NaNの場合は不正解
+      if (isNaN(userValue)) {
+        correct = false;
+      } else {
+        correct = userValue === this.currentAnswer;
+      }
+    }
+    
+    // 答え合わせ時にそろばんを表示
+    if (this.abacusDisplayContainer) {
+      const digits = this.currentLevel.digits;
+      this.createAbacusDisplay(this.currentAnswer, digits);
+      const abacusBase = this.abacusDisplayContainer.querySelector('.abacus-base');
+      if (abacusBase) {
+        abacusBase.style.opacity = "1";
+      }
+      this.abacusDisplayContainer.style.display = "flex";
+    }
+    
+    // 説明文を更新
+    const instructionText = getElementSafely("instruction-text");
+    if (instructionText) {
+      instructionText.innerHTML = "けってい ボタンで つぎに すすめます ⏭️";
+    }
     
     if (correct) {
       this.correctCount++;
@@ -572,9 +645,7 @@ export class GameController {
     }
 
     this.waitingAnswer = false;
-    setTimeout(() => {
-      this.nextQuestion();
-    }, 1000);
+    // 次の問題への自動遷移を削除（決定ボタンで手動で進む）
   }
 
   /**
@@ -602,14 +673,15 @@ export class GameController {
     const maxDigits = Math.max(digits, 4);
     const abacusBase = document.createElement('div');
     abacusBase.className = 'abacus-base';
-    abacusBase.style.cssText = 'position: relative; width: 500px; height: 700px; overflow: hidden; margin-top: -75px; margin-bottom: -75px;';
+    abacusBase.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; margin: 0; display: flex; align-items: center; justify-content: center;';
     
     // 土台画像
     const dodai = document.createElement('img');
     dodai.src = '/images/dodai.png';
     dodai.alt = 'そろばんの土台';
     dodai.className = 'dodai';
-    dodai.style.cssText = 'width: 100%; height: 100%; display: block;';
+    dodai.loading = 'eager'; // 重要な画像なので即座に読み込む
+    dodai.style.cssText = 'display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; margin: 0;';
     setupImageErrorHandler(dodai);
     abacusBase.appendChild(dodai);
     
@@ -624,7 +696,7 @@ export class GameController {
       upperBead.setAttribute('data-type', 'upper');
       const upperY = this.getUpperY(value, maxDigits, col);
       const upperLeft = this.rodX[col] - this.tamaOffsetX;
-      upperBead.style.cssText = 'position: absolute; left: ' + upperLeft + 'px; top: ' + upperY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+      upperBead.style.cssText = 'position: absolute; left: ' + upperLeft + 'px; top: ' + upperY + 'px; width: ' + this.tamaWidth + 'px; height: ' + this.tamaHeight + 'px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
       setupImageErrorHandler(upperBead);
       abacusBase.appendChild(upperBead);
       
@@ -639,7 +711,7 @@ export class GameController {
         lowerBead.setAttribute('data-type', 'lower');
         const lowerY = this.getLowerY(value, maxDigits, col, row);
         const lowerLeft = this.rodX[col] - this.tamaOffsetX;
-        lowerBead.style.cssText = 'position: absolute; left: ' + lowerLeft + 'px; top: ' + lowerY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+        lowerBead.style.cssText = 'position: absolute; left: ' + lowerLeft + 'px; top: ' + lowerY + 'px; width: ' + this.tamaWidth + 'px; height: ' + this.tamaHeight + 'px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
         setupImageErrorHandler(lowerBead);
         abacusBase.appendChild(lowerBead);
       }

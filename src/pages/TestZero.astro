@@ -3,50 +3,66 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout>
-<div class="test-screen" style="padding: 20px; min-height: 100vh;">
-  <div style="text-align: center; margin-bottom: 20px;">
-    <h1 style="font-size: 2rem; margin-bottom: 10px;">そろばん入力テスト</h1>
-    <a href="/" class="btn-back" style="display: inline-block; padding: 8px 16px; background: #8b7e71; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 0.9rem; transition: all 0.15s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); border: 2px solid #6b5f52;">🏠 ホームに戻る</a>
-  </div>
-
-  <div class="abacus-and-controls">
-    <!-- 左側：そろばんエリア -->
-    <div id="abacus-area" class="abacus-area">
-      <div class="abacus-wrapper">
-        <div id="abacus-display-container"></div>
+<div class="screen test-screen">
+  <div class="panel game-panel">
+    <div class="game-header">
+      <div class="game-header-left">
+        <p class="badge">そろばんシミュレーター 💻</p>
       </div>
+      <button class="btn-back" onclick="window.location.href='/'" aria-label="ホームに戻る">もどる 🏠</button>
     </div>
 
-    <!-- 右側：コントロールエリア -->
-    <div class="control-area">
-      <div class="answer-area">
-        <div id="answer-display" class="answer-display">0</div>
-        <div class="scroll-buttons">
-          <button class="scroll-btn" id="scroll-up" aria-label="数字を増やす">▲</button>
-          <button class="scroll-btn" id="scroll-down" aria-label="数字を減らす">▼</button>
+    <div class="instruction-box">
+      <p class="instruction" id="instruction-text">
+        すうじを いれて そろばんの たまを うごかしてみよう ✨
+      </p>
+    </div>
+
+    <div class="layout-wrapper">
+      <!-- ① フィードバック表示エリア（最上部） -->
+      <div class="feedback-area">
+        <div id="countdown" class="countdown" style="display: none;"></div>
+        <div id="feedback" class="feedback"></div>
+      </div>
+
+    <!-- ②③ そろばんエリア（左）とテンキーエリア（右） -->
+    <div class="main-area">
+      <div id="abacus-area" class="abacus-area">
+        <div class="abacus-wrapper">
+          <div id="abacus-display-container"></div>
         </div>
       </div>
 
-      <div class="keypad">
-        <div class="keypad-row">
-          <button class="key-btn" data-key="7">7</button>
-          <button class="key-btn" data-key="8">8</button>
-          <button class="key-btn" data-key="9">9</button>
+      <div class="keypad-area">
+        <div class="answer-area">
+          <div id="answer-display" class="answer-display">0</div>
+          <div class="scroll-buttons">
+            <button class="scroll-btn" id="scroll-up" aria-label="数字を増やす">▲</button>
+            <button class="scroll-btn" id="scroll-down" aria-label="数字を減らす">▼</button>
+          </div>
         </div>
-        <div class="keypad-row">
-          <button class="key-btn" data-key="4">4</button>
-          <button class="key-btn" data-key="5">5</button>
-          <button class="key-btn" data-key="6">6</button>
-        </div>
-        <div class="keypad-row">
-          <button class="key-btn" data-key="1">1</button>
-          <button class="key-btn" data-key="2">2</button>
-          <button class="key-btn" data-key="3">3</button>
-        </div>
-        <div class="keypad-row">
-          <button class="key-btn" data-key="0">0</button>
-          <button class="key-btn" data-key="del">けす</button>
-          <button class="key-btn" data-key="clear">クリア</button>
+
+        <div class="keypad">
+          <div class="keypad-row">
+            <button class="key-btn" data-key="7" aria-label="7">7</button>
+            <button class="key-btn" data-key="8" aria-label="8">8</button>
+            <button class="key-btn" data-key="9" aria-label="9">9</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="4" aria-label="4">4</button>
+            <button class="key-btn" data-key="5" aria-label="5">5</button>
+            <button class="key-btn" data-key="6" aria-label="6">6</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="1" aria-label="1">1</button>
+            <button class="key-btn" data-key="2" aria-label="2">2</button>
+            <button class="key-btn" data-key="3" aria-label="3">3</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="0" aria-label="0">0</button>
+            <button class="key-btn" data-key="del" aria-label="けす">けす</button>
+            <button class="key-btn" data-key="clear" aria-label="クリア">クリア</button>
+          </div>
         </div>
       </div>
     </div>
@@ -86,15 +102,28 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     };
   }
 
-  // gameController.jsと同じ座標設定
-  const rodX = [62, 184, 306, 428];
+  // 座標設定（微調整用 - ここで値を変更してテストできます）
+  // 基準サイズ: 500px × 700px
+  const BASE_WIDTH = 500;
+  const BASE_HEIGHT = 700;
+  
+  // 棒の中心X座標（4本分）- 微調整可能
+  // 1段目(61)と4段目(432)の間を均等に3分割
+  const rodX = [61, 185, 308, 432];
+  
+  // 玉画像のサイズ - 微調整可能
   const tamaWidth = 108;
-  const tamaOffsetX = tamaWidth / 2;
-  const upperRestY = 106;
-  const upperActiveY = 141;
-  const lowerRestY = 469;
-  const lowerActiveStartY = 229;
-  const lowerGap = 65;
+  const tamaHeight = 70;
+  const tamaOffsetX = tamaWidth / 2; // 54px
+  
+  // 五玉（上玉）のY座標 - 微調整可能
+  const upperRestY = 80;     // 休み位置（一番上）
+  const upperActiveY = 117;  // active位置（梁に寄る）
+  
+  // 下玉（一玉×4）のY座標 - 微調整可能
+  const lowerRestY = 448;            // 休み位置の一番下
+  const lowerActiveStartY = 205;     // active開始位置（梁のすぐ下）
+  const lowerGap = 65;               // 下玉の上下間隔
 
   function getDigit(value, digits, col) {
     const str = value.toString().padStart(digits, "0");
@@ -129,14 +158,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const maxDigits = Math.max(digits, 4);
     const abacusBase = document.createElement('div');
     abacusBase.className = 'abacus-base';
-    abacusBase.style.cssText = 'position: relative; width: 500px; height: 700px; overflow: hidden; margin-top: -75px; margin-bottom: -75px;';
+    abacusBase.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; margin: 0; display: flex; align-items: center; justify-content: center;';
     
     // 土台画像
     const dodai = document.createElement('img');
     dodai.src = '/images/dodai.png';
     dodai.alt = 'そろばんの土台';
     dodai.className = 'dodai';
-    dodai.style.cssText = 'width: 100%; height: 100%; display: block;';
+    dodai.loading = 'eager';
+    dodai.style.cssText = 'display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; margin: 0;';
     setupImageErrorHandler(dodai);
     abacusBase.appendChild(dodai);
 
@@ -151,7 +181,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       upperBead.setAttribute('data-type', 'upper');
       const upperY = getUpperY(value, maxDigits, col);
       const upperLeft = rodX[col] - tamaOffsetX;
-      upperBead.style.cssText = 'position: absolute; left: ' + upperLeft + 'px; top: ' + upperY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+      upperBead.style.cssText = 'position: absolute; left: ' + upperLeft + 'px; top: ' + upperY + 'px; width: ' + tamaWidth + 'px; height: ' + tamaHeight + 'px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
       setupImageErrorHandler(upperBead);
       abacusBase.appendChild(upperBead);
 
@@ -166,7 +196,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         lowerBead.setAttribute('data-type', 'lower');
         const lowerY = getLowerY(value, maxDigits, col, row);
         const lowerLeft = rodX[col] - tamaOffsetX;
-        lowerBead.style.cssText = 'position: absolute; left: ' + lowerLeft + 'px; top: ' + lowerY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+        lowerBead.style.cssText = 'position: absolute; left: ' + lowerLeft + 'px; top: ' + lowerY + 'px; width: ' + tamaWidth + 'px; height: ' + tamaHeight + 'px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
         setupImageErrorHandler(lowerBead);
         abacusBase.appendChild(lowerBead);
       }
@@ -331,38 +361,175 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 <style>
   .test-screen {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
   }
 
-  /* GameScreenと同じ2カラムレイアウト */
-  .abacus-and-controls {
+  .game-panel {
+    padding-bottom: 14px;
+  }
+
+  .game-header {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .game-header-left {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-back {
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: #8b7e71;
+    color: #ffffff;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #6b5f52;
+  }
+
+  .btn-back:hover {
+    background: #6b5f52;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn-back:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .badge {
+    background: #f7ebdb;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.82rem;
+    color: var(--text-subtle);
+  }
+
+  .instruction-box {
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  .instruction {
+    font-size: 2rem;
+    line-height: 1.6;
+    color: var(--text-main);
+    font-weight: bold;
+    margin: 10px 0;
+  }
+
+  /* GameScreenと同じレイアウト */
+  .layout-wrapper {
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    gap: 32px;
-    margin: 20px 0;
-    min-height: 700px;
+    align-items: center;
+    gap: 0;
+  }
+
+  .feedback-area {
+    width: 100%;
+    height: 120px;
+    min-height: 120px;
+    max-height: 120px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .feedback {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-size: 4rem;
+    font-weight: bold;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -1px -1px 2px rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    pointer-events: none;
+  }
+
+  .feedback.success {
+    color: var(--success);
+  }
+
+  .feedback.error {
+    color: var(--danger);
+  }
+
+  .countdown {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    font-size: 8rem;
+    font-weight: bold;
+    color: var(--accent-pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    pointer-events: none;
+    background: transparent;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.9);
+  }
+
+  .main-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    width: 100%;
+    max-width: 1200px;
+    align-items: start;
+    flex-shrink: 0;
   }
 
   .abacus-area {
-    width: 500px;
-    flex-shrink: 0;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding: 0;
+    margin: 0;
+    width: 100%;
   }
 
   .abacus-wrapper {
-    width: 500px;
-    height: 700px;
+    width: 100%;
+    max-width: 500px;
     position: relative;
     border: 2px solid #d4c4b0;
     border-radius: 12px;
     background: #faf8f5;
     overflow: hidden;
+    padding: 0;
+    margin: 0;
+    aspect-ratio: 500 / 700;
+    max-height: 600px;
   }
 
   #abacus-display-container {
@@ -372,18 +539,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     align-items: center;
     justify-content: center;
     position: relative;
+    padding: 0;
+    margin: 0;
   }
 
-  .control-area {
-    width: auto;
-    flex: none;
-    min-width: 300px;
-    max-width: 350px;
+  .keypad-area {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
     gap: 20px;
-    align-items: stretch;
-    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
   .answer-area {
@@ -398,84 +566,106 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     min-height: 100px;
     max-height: 200px;
     border-radius: 12px;
-    background: #ffffff;
-    border: 3px solid #d4c4b0;
-    padding: 20px 24px;
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #333;
+    border: 1px solid var(--border-soft);
+    background: #fff9f0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    padding: 20px 24px;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--text-main);
     text-align: right;
     overflow-y: auto;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow-x: hidden;
   }
 
   .scroll-buttons {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-left: 8px;
   }
 
   .scroll-btn {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: 1px solid #6b5f52;
-    background: #8b7e71;
-    color: #ffffff;
+    border: 2px solid #d4c4b0;
+    background: #f3e1d2;
+    color: var(--text-main);
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
+    padding: 0;
   }
 
   .scroll-btn:hover {
-    background: #6b5f52;
+    background: #e8d0b8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .scroll-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .keypad {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    flex-shrink: 0;
     width: 100%;
+    max-width: 350px;
   }
 
   .keypad-row {
     display: flex;
-    gap: 12px;
-    width: 100%;
+    gap: 10px;
   }
 
   .key-btn {
     flex: 1;
     aspect-ratio: 1;
+    border-radius: 16px;
+    border: 2px solid #d4c4b0;
     padding: 0;
-    border-radius: 12px;
-    border: 2px solid #6b5f52;
-    background: #f7ebdb;
-    color: #333;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: bold;
+    background: #f3e1d2;
+    color: var(--text-main);
     cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     min-width: 0;
     max-width: 100%;
   }
 
+  /* 数字ボタン（0-9）のフォントサイズを大きく */
+  .key-btn[data-key="0"],
+  .key-btn[data-key="1"],
+  .key-btn[data-key="2"],
+  .key-btn[data-key="3"],
+  .key-btn[data-key="4"],
+  .key-btn[data-key="5"],
+  .key-btn[data-key="6"],
+  .key-btn[data-key="7"],
+  .key-btn[data-key="8"],
+  .key-btn[data-key="9"] {
+    font-size: 2.2rem;
+  }
+
   .key-btn:hover {
-    background: #e8d9c5;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: #e8d0b8;
   }
 
   .key-btn:active {
@@ -483,15 +673,71 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
-  .btn-back:hover {
-    background: #6b5f52;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  /* レスポンシブ対応 */
+  @media (max-width: 1024px) {
+    .main-area {
+      gap: 5px;
+    }
   }
 
-  .btn-back:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  @media (max-width: 768px) {
+    .main-area {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .abacus-wrapper {
+      max-width: 100%;
+    }
+
+    .keypad {
+      max-width: 100%;
+    }
+
+    .feedback {
+      font-size: 3rem;
+    }
+
+    .countdown {
+      font-size: 5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .feedback {
+      font-size: 2rem;
+      min-height: 60px;
+      padding: 5px 10px;
+    }
+
+    .countdown {
+      font-size: 4rem;
+    }
+
+    .abacus-wrapper {
+      max-width: 100%;
+    }
+
+    .keypad {
+      gap: 8px;
+    }
+
+    .key-btn {
+      font-size: 1.2rem;
+    }
+
+    .key-btn[data-key="0"],
+    .key-btn[data-key="1"],
+    .key-btn[data-key="2"],
+    .key-btn[data-key="3"],
+    .key-btn[data-key="4"],
+    .key-btn[data-key="5"],
+    .key-btn[data-key="6"],
+    .key-btn[data-key="7"],
+    .key-btn[data-key="8"],
+    .key-btn[data-key="9"] {
+      font-size: 1.4rem;
+    }
   }
 </style>
 </BaseLayout>

@@ -36,6 +36,6 @@ export const RESULT_MESSAGES = {
 
 export const FEEDBACK_MESSAGES = {
   correct: "せいかい！ 🎉",
-  incorrect: (correctAnswer) => `ざんねん… 😢 ただしい こたえ：${correctAnswer}`,
+  incorrect: (correctAnswer) => `ざんねん… 😢 こたえ：${correctAnswer}`,
 };
 

@@ -9,24 +9,25 @@ interface Props {
 
 const { value = 0, digits = 1 } = Astro.props;
 
-// 棒の中心X座標（4本分）
-// 各棒の中心位置を正確に指定
-const rodX = [62, 184, 306, 428];
+// 棒の中心X座標（4本分、500px基準）
+// 各棒の中心位置を正確に指定（TestZero.astroと同じ値）
+const rodX = [61, 185, 308, 432]; // px値（計算用、TestZero.astroと同じ）
+const rodXPercent = [12.2, 37.0, 61.6, 86.4]; // パーセント値
 
-// 玉画像の幅（tama.png = 108px）
-const tamaWidth = 108;
+// 玉画像の幅（tama.png = 108px、500px基準）
+const tamaWidth = 108; // px値（計算用）
+const tamaWidthPercent = 21.6; // パーセント値（108/500）
 // 玉の中心を棒の中心に合わせるためのオフセット
-// left = rodX[col] - tamaOffsetX で、玉の中心が棒の中心に一致する
-const tamaOffsetX = tamaWidth / 2; // 54px
+const tamaOffsetX = tamaWidth / 2; // 54px（計算用）
+const tamaOffsetXPercent = tamaWidthPercent / 2; // 10.8%（相対値）
 
-// 五玉（上玉）のY座標
-const upperRestY = 106;     // 休み位置（一番上、梁から離れた位置）
-const upperActiveY = 141;  // active位置（梁に寄る位置）
+// 五玉（上玉）のY座標（TestZero.astroと同じ値）
+const upperRestY = 80;     // 休み位置（一番上、梁から離れた位置）
+const upperActiveY = 117;  // active位置（梁に寄る位置）
 
-// 下玉（一玉×4）のY座標
-const lowerRestTopY = 410;         // 休み位置の一番上（row 0の位置）
-const lowerRestY = 469;            // 休み位置の一番下（row 3の位置）
-const lowerActiveStartY = 229;     // active開始位置（梁のすぐ下）
+// 下玉（一玉×4）のY座標（TestZero.astroと同じ値）
+const lowerRestY = 448;            // 休み位置の一番下（row 3の位置）
+const lowerActiveStartY = 205;     // active開始位置（梁のすぐ下）
 const lowerGap = 65;               // 下玉の上下間隔
 
 // 値を各桁に分解
@@ -80,7 +81,7 @@ function getLowerY(col: number, row: number): number {
 ---
 
 <div class="abacus-base">
-  <img src="/images/dodai.png" alt="そろばんの土台" class="dodai" />
+  <img src="/images/dodai.png" alt="そろばんの土台" class="dodai" loading="eager" />
 
   <!-- 4列分の玉を配置: 各列に上玉1個 + 下玉4個 = 5個ずつ -->
   {Array.from({ length: 4 }, (_, col) => (
@@ -134,18 +135,25 @@ function getLowerY(col: number, row: number): number {
 
 <style>
   .abacus-base {
-    position: relative;
-    width: 500px;
-    height: 700px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    margin-top: -75px;
-    margin-bottom: -75px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .dodai {
+    display: block;
     width: 100%;
     height: 100%;
-    display: block;
+    object-fit: contain;
+    object-position: center;
+    margin: 0;
   }
 
   .tama {

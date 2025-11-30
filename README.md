@@ -97,6 +97,41 @@ src/
 - **Vanilla JavaScript**: ゲームロジック
 - **CSS**: カスタムスタイル
 
+## デプロイ
+
+### Vercel にデプロイ
+
+1. [Vercel](https://vercel.com) にアカウントを作成
+2. GitHubリポジトリを接続
+3. プロジェクトをインポート（自動的に `vercel.json` を認識）
+
+または、Vercel CLIを使用：
+
+```bash
+npm i -g vercel
+vercel
+```
+
+### Netlify にデプロイ
+
+1. [Netlify](https://www.netlify.com) にアカウントを作成
+2. GitHubリポジトリを接続
+3. ビルド設定：
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+または、Netlify CLIを使用：
+
+```bash
+npm i -g netlify-cli
+netlify deploy --prod
+```
+
+### GitHub Pages にデプロイ
+
+1. GitHub Actions を使用して自動デプロイを設定
+2. `.github/workflows/deploy.yml` を作成（必要に応じて）
+
 ## ライセンス
 
 MIT
