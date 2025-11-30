@@ -114,8 +114,8 @@
   .btn-exit-fullscreen {
     border: none;
     border-radius: 12px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
+    padding: 10px 18px;
+    font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
     background: #6b8e23;
@@ -123,6 +123,8 @@
     transition: all 0.15s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     border: 2px solid #556b2f;
+    white-space: nowrap;
+    display: inline-block;
   }
 
   .btn-fullscreen:hover,
@@ -585,10 +587,12 @@
     const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
     
     if (fullscreenBtn) {
+      fullscreenBtn.style.display = 'inline-block';
       fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
     
     if (exitFullscreenBtn) {
+      exitFullscreenBtn.style.display = 'none';
       exitFullscreenBtn.addEventListener('click', toggleFullscreen);
     }
     
