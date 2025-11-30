@@ -58,6 +58,34 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   const INITIAL_VALUE = 0;
   const INITIAL_DIGITS = 4;
 
+  // DOM要素を安全に取得する
+  function getElementSafely(id) {
+    const el = document.getElementById(id);
+    if (!el) {
+      console.error(`Element not found: ${id}`);
+      return null;
+    }
+    return el;
+  }
+
+  // 数字のバリデーション（0-9のみ）
+  function validateDigit(num) {
+    const n = Number(num);
+    if (isNaN(n) || n < 0 || n > 9) {
+      console.warn("不正な入力:", num);
+      return null;
+    }
+    return n;
+  }
+
+  // 画像読み込みエラー処理を設定
+  function setupImageErrorHandler(img) {
+    img.onerror = () => {
+      console.error("画像読み込みに失敗:", img.src);
+      // フォールバック画像があれば差し替え、無ければ無視
+    };
+  }
+
   // gameController.jsと同じ座標設定
   const rodX = [62, 184, 306, 428];
   const tamaWidth = 108;
@@ -91,7 +119,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   }
 
   function createAbacusDisplay(value, digits) {
-    const container = document.getElementById('abacus-display-container');
+    const container = getElementSafely('abacus-display-container');
     if (!container) return;
 
     // 既存のそろばんを削除
@@ -109,6 +137,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     dodai.alt = 'そろばんの土台';
     dodai.className = 'dodai';
     dodai.style.cssText = 'width: 100%; height: 100%; display: block;';
+    setupImageErrorHandler(dodai);
     abacusBase.appendChild(dodai);
 
     // 玉を配置（gameController.jsと同じスタイル）
@@ -123,6 +152,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       const upperY = getUpperY(value, maxDigits, col);
       const upperLeft = rodX[col] - tamaOffsetX;
       upperBead.style.cssText = 'position: absolute; left: ' + upperLeft + 'px; top: ' + upperY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+      setupImageErrorHandler(upperBead);
       abacusBase.appendChild(upperBead);
 
       // 下玉（一玉）
@@ -137,6 +167,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         const lowerY = getLowerY(value, maxDigits, col, row);
         const lowerLeft = rodX[col] - tamaOffsetX;
         lowerBead.style.cssText = 'position: absolute; left: ' + lowerLeft + 'px; top: ' + lowerY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+        setupImageErrorHandler(lowerBead);
         abacusBase.appendChild(lowerBead);
       }
     }
@@ -182,7 +213,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   }
 
   function updateDisplay() {
-    const answerDisplay = document.getElementById('answer-display');
+    const answerDisplay = getElementSafely('answer-display');
     if (answerDisplay) {
       answerDisplay.textContent = currentValue.toString();
     }
@@ -241,10 +272,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         currentValue = 0;
         updateDisplay();
       } else if (/^[0-9]$/.test(key)) {
+        const validatedDigit = validateDigit(key);
+        if (validatedDigit === null) {
+          return;
+        }
         if (currentValue === 0) {
-          currentValue = parseInt(key, 10);
+          currentValue = validatedDigit;
         } else {
-          const newValue = currentValue * 10 + parseInt(key, 10);
+          const newValue = currentValue * 10 + validatedDigit;
           if (newValue <= 9999) {
             currentValue = newValue;
           }
@@ -254,8 +289,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     });
 
     // 上下ボタンの処理
-    const scrollUpBtn = document.getElementById('scroll-up');
-    const scrollDownBtn = document.getElementById('scroll-down');
+    const scrollUpBtn = getElementSafely('scroll-up');
+    const scrollDownBtn = getElementSafely('scroll-down');
 
     if (scrollUpBtn) {
       scrollUpBtn.addEventListener('mousedown', (e) => {

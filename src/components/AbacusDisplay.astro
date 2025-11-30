@@ -111,6 +111,27 @@ function getLowerY(col: number, row: number): number {
   ))}
 </div>
 
+<script>
+  // 画像読み込みエラー処理
+  function setupImageErrorHandler(img) {
+    if (img && !img.onerror) {
+      img.onerror = () => {
+        console.error("画像読み込みに失敗:", img.src);
+        // フォールバック画像があれば差し替え、無ければ無視
+      };
+    }
+  }
+
+  // DOMContentLoaded後にすべての画像にエラーハンドラーを設定
+  document.addEventListener('DOMContentLoaded', () => {
+    const abacusBase = document.querySelector('.abacus-base');
+    if (abacusBase) {
+      const images = abacusBase.querySelectorAll('img');
+      images.forEach(setupImageErrorHandler);
+    }
+  });
+</script>
+
 <style>
   .abacus-base {
     position: relative;

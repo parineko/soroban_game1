@@ -5,6 +5,45 @@
 import { LEVELS, RESULT_MESSAGES, FEEDBACK_MESSAGES } from './levelConfig.js';
 
 /**
+ * DOM要素を安全に取得する
+ * @param {string} id - 要素ID
+ * @returns {HTMLElement|null} 要素またはnull
+ */
+function getElementSafely(id) {
+  const el = document.getElementById(id);
+  if (!el) {
+    console.error(`Element not found: ${id}`);
+    return null;
+  }
+  return el;
+}
+
+/**
+ * 数字のバリデーション（0-9のみ）
+ * @param {number|string} num - 検証する値
+ * @returns {number|null} 有効な数字またはnull
+ */
+function validateDigit(num) {
+  const n = Number(num);
+  if (isNaN(n) || n < 0 || n > 9) {
+    console.warn("不正な入力:", num);
+    return null;
+  }
+  return n;
+}
+
+/**
+ * 画像読み込みエラー処理を設定
+ * @param {HTMLImageElement} img - 画像要素
+ */
+function setupImageErrorHandler(img) {
+  img.onerror = () => {
+    console.error("画像読み込みに失敗:", img.src);
+    // フォールバック画像があれば差し替え、無ければ無視
+  };
+}
+
+/**
  * ゲーム状態管理クラス
  */
 export class GameController {
@@ -17,16 +56,16 @@ export class GameController {
     this.showTimeoutId = null;
     this.waitingAnswer = false;
     
-    // DOM要素の参照
-    this.levelLabel = document.getElementById("level-label");
-    this.questionCounter = document.getElementById("question-counter");
-    this.answerDisplay = document.getElementById("answer-display");
-    this.feedback = document.getElementById("feedback");
-    this.resultSummary = document.getElementById("result-summary");
-    this.resultDetail = document.getElementById("result-detail");
-    this.abacusArea = document.getElementById("abacus-area");
-    this.abacusDisplayContainer = document.getElementById("abacus-display-container");
-    this.countdownElement = document.getElementById("countdown");
+    // DOM要素の参照（安全に取得）
+    this.levelLabel = getElementSafely("level-label");
+    this.questionCounter = getElementSafely("question-counter");
+    this.answerDisplay = getElementSafely("answer-display");
+    this.feedback = getElementSafely("feedback");
+    this.resultSummary = getElementSafely("result-summary");
+    this.resultDetail = getElementSafely("result-detail");
+    this.abacusArea = getElementSafely("abacus-area");
+    this.abacusDisplayContainer = getElementSafely("abacus-display-container");
+    this.countdownElement = getElementSafely("countdown");
     
     // そろばんの座標設定（AbacusDisplay.astroと同じ値）
     this.rodX = [62, 184, 306, 428]; // 4本の棒の中心X座標
@@ -353,8 +392,9 @@ export class GameController {
       return;
     }
 
-    // 数字入力
-    if (!/^[0-9]$/.test(key)) {
+    // 数字入力（バリデーション）
+    const validatedDigit = validateDigit(key);
+    if (validatedDigit === null) {
       return;
     }
 
@@ -363,9 +403,9 @@ export class GameController {
     }
 
     if (this.answerText === "0") {
-      this.answerText = key;
+      this.answerText = validatedDigit.toString();
     } else {
-      this.answerText += key;
+      this.answerText += validatedDigit.toString();
     }
     
     if (this.answerDisplay) {
@@ -570,6 +610,7 @@ export class GameController {
     dodai.alt = 'そろばんの土台';
     dodai.className = 'dodai';
     dodai.style.cssText = 'width: 100%; height: 100%; display: block;';
+    setupImageErrorHandler(dodai);
     abacusBase.appendChild(dodai);
     
     // 玉を生成
@@ -584,6 +625,7 @@ export class GameController {
       const upperY = this.getUpperY(value, maxDigits, col);
       const upperLeft = this.rodX[col] - this.tamaOffsetX;
       upperBead.style.cssText = 'position: absolute; left: ' + upperLeft + 'px; top: ' + upperY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+      setupImageErrorHandler(upperBead);
       abacusBase.appendChild(upperBead);
       
       // 下玉
@@ -598,6 +640,7 @@ export class GameController {
         const lowerY = this.getLowerY(value, maxDigits, col, row);
         const lowerLeft = this.rodX[col] - this.tamaOffsetX;
         lowerBead.style.cssText = 'position: absolute; left: ' + lowerLeft + 'px; top: ' + lowerY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+        setupImageErrorHandler(lowerBead);
         abacusBase.appendChild(lowerBead);
       }
     }
