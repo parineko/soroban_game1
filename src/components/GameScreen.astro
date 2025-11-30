@@ -398,6 +398,21 @@
     }
   }
 
+  /* 小さい画面（高さが足りない場合）用のスケール調整 */
+  @media (max-height: 800px) {
+    .layout-wrapper {
+      transform: scale(0.85);
+      transform-origin: top center;
+    }
+  }
+
+  @media (max-height: 700px) {
+    .layout-wrapper {
+      transform: scale(0.75);
+      transform-origin: top center;
+    }
+  }
+
   @media (max-width: 768px) {
     .main-area {
       grid-template-columns: 1fr;
