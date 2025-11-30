@@ -2,6 +2,12 @@
 // BaseLayout.astro
 // 共通レイアウト（背景色・フォント・余白）
 import '../styles/global.css';
+
+interface Props {
+  showHeader?: boolean;
+}
+
+const { showHeader = true } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -14,10 +20,12 @@ import '../styles/global.css';
   <title>🧮 そろばん かんたん ゲーム ✨</title>
 </head>
 <body>
-  <div class="app-container">
-    <header class="app-header">
-      <h1>🧮 そろばん かんたん ゲーム ✨</h1>
-    </header>
+  <div class="app-container" class:no-header={!showHeader}>
+    {showHeader && (
+      <header class="app-header">
+        <h1>🧮 そろばん かんたん ゲーム ✨</h1>
+      </header>
+    )}
 
     <main class="app-main">
       <slot />
@@ -54,6 +62,10 @@ import '../styles/global.css';
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+
+  .app-container.no-header .app-main {
+    padding-top: 0;
   }
 
 </style>

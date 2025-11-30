@@ -74,6 +74,11 @@
 </div>
 
 <style>
+  /* ゲーム画面ではヘッダーを非表示 */
+  :global(body.game-screen-active .app-header) {
+    display: none !important;
+  }
+
   .game-screen {
     width: 100%;
   }
@@ -473,4 +478,40 @@
     }
   }
 </style>
+
+<script>
+  // ゲーム画面が表示されている時にヘッダーを非表示にする
+  function toggleHeader() {
+    const gameScreen = document.querySelector('.game-screen');
+    if (gameScreen) {
+      const isVisible = gameScreen.style.display !== 'none' && 
+                       gameScreen.style.display !== '' &&
+                       window.getComputedStyle(gameScreen).display !== 'none';
+      
+      if (isVisible) {
+        document.body.classList.add('game-screen-active');
+      } else {
+        document.body.classList.remove('game-screen-active');
+      }
+    }
+  }
+
+  // 初期化と監視
+  document.addEventListener('DOMContentLoaded', () => {
+    toggleHeader();
+    
+    // MutationObserver で display の変更を監視
+    const observer = new MutationObserver(() => {
+      toggleHeader();
+    });
+
+    const gameScreen = document.querySelector('.game-screen');
+    if (gameScreen) {
+      observer.observe(gameScreen, {
+        attributes: true,
+        attributeFilter: ['style']
+      });
+    }
+  });
+</script>
 
