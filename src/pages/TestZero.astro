@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout>
+<BaseLayout showHeader={false}>
 <div class="screen test-screen">
   <div class="panel game-panel">
     <div class="game-header">
@@ -755,4 +755,31 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
   }
 </style>
+
+<script>
+  // 全画面表示機能
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error('全画面表示に失敗:', err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  // F11キーで全画面切り替え
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F11') {
+      e.preventDefault();
+      toggleFullscreen();
+    }
+  });
+
+  // 全画面状態の変更を監視
+  document.addEventListener('fullscreenchange', () => {
+    const isFullscreen = !!document.fullscreenElement;
+    document.body.classList.toggle('is-fullscreen', isFullscreen);
+  });
+</script>
 </BaseLayout>
