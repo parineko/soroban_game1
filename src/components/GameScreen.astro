@@ -1,39 +1,68 @@
 ---
 // GameScreen.astro
 // ゲーム画面コンポーネント
-import AbacusDisplay from './AbacusDisplay.astro';
-import Keypad from './Keypad.astro';
 ---
 
 <div class="screen game-screen" data-screen="game" style="display: none;">
   <div class="panel game-panel">
     <div class="game-header">
-      <p id="level-label" class="badge">れべる：しょきゅう 🌸</p>
-      <p id="question-counter" class="badge">もんすう：1 / 10</p>
-    </div>
-
-    <div id="abacus-area" class="abacus-area">
-      <!-- そろばんが JS で そうにゅうされます -->
+      <div class="game-header-left">
+        <p id="level-label" class="badge">れべる：しょきゅう 🌸</p>
+        <p id="question-counter" class="badge">もんすう：1 / 10</p>
+      </div>
+      <button class="btn-back" data-action="give-up">戻る 🏠</button>
     </div>
 
     <div class="instruction-box">
       <p class="instruction">
         そろばんの かずを おぼえて<br>
-        したの でんたくで こたえを いれてね 💡
+        みぎの でんたくで こたえを いれてね 💡
       </p>
     </div>
 
-    <div class="answer-area">
-      <div class="answer-label">こたえ 🐾</div>
-      <div id="answer-display" class="answer-display"></div>
-    </div>
+    <div class="abacus-and-controls">
+      <div id="abacus-area" class="abacus-area">
+        <div class="abacus-wrapper">
+          <!-- そろばんは gameController.js で動的に生成されます -->
+          <div id="abacus-display-container"></div>
+        </div>
+      </div>
 
-    <Keypad />
+      <div class="control-area">
+        <div id="countdown" class="countdown" style="display: none;"></div>
+        <div id="feedback" class="feedback"></div>
+        
+        <div class="answer-area">
+          <div id="answer-display" class="answer-display"></div>
+          <div class="scroll-buttons">
+            <button class="scroll-btn" id="scroll-up" aria-label="上にスクロール">▲</button>
+            <button class="scroll-btn" id="scroll-down" aria-label="下にスクロール">▼</button>
+          </div>
+        </div>
 
-    <div id="feedback" class="feedback"></div>
-
-    <div class="button-row bottom-row">
-      <button class="btn" data-action="give-up">あきらめる…🏠</button>
+        <div class="keypad">
+          <div class="keypad-row">
+            <button class="key-btn" data-key="7">7</button>
+            <button class="key-btn" data-key="8">8</button>
+            <button class="key-btn" data-key="9">9</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="4">4</button>
+            <button class="key-btn" data-key="5">5</button>
+            <button class="key-btn" data-key="6">6</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="1">1</button>
+            <button class="key-btn" data-key="2">2</button>
+            <button class="key-btn" data-key="3">3</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="0">0</button>
+            <button class="key-btn" data-key="del">けす</button>
+            <button class="key-btn" data-key="enter">けってい</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -50,8 +79,39 @@ import Keypad from './Keypad.astro';
   .game-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 6px;
     margin-bottom: 10px;
+  }
+
+  .game-header-left {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-back {
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: #8b7e71;
+    color: #ffffff;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #6b5f52;
+  }
+
+  .btn-back:hover {
+    background: #6b5f52;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn-back:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
   .badge {
@@ -62,12 +122,56 @@ import Keypad from './Keypad.astro';
     color: var(--text-subtle);
   }
 
+  /* ゲーム画面の2カラムレイアウト */
+  .abacus-and-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 32px;
+    margin: 20px 0;
+    min-height: 700px;
+  }
+
+  /* 左側：そろばんエリア（固定幅500px） */
   .abacus-area {
-    margin: 10px auto 12px;
-    min-height: 120px;
+    width: 500px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .abacus-wrapper {
+    width: 500px;
+    height: 700px;
+    position: relative;
+    border: 2px solid #d4c4b0;
+    border-radius: 12px;
+    background: #faf8f5;
+    overflow: hidden;
+  }
+
+  #abacus-display-container {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+  }
+
+  /* 右側：こたえ入力エリア（内容に応じた自然な幅） */
+  .control-area {
+    width: auto;
+    flex: none;
+    min-width: 300px;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
   }
 
   .instruction-box {
@@ -82,38 +186,84 @@ import Keypad from './Keypad.astro';
   }
 
   .answer-area {
-    margin-top: 8px;
     display: flex;
     align-items: center;
-    gap: 10px;
-  }
-
-  .answer-label {
-    font-size: 0.9rem;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #f7ebdb;
-    color: var(--text-main);
+    gap: 8px;
+    width: 100%;
   }
 
   .answer-display {
     flex: 1;
-    min-height: 36px;
+    min-height: 100px;
+    max-height: 200px;
     border-radius: 12px;
     border: 1px solid var(--border-soft);
     background: #fff9f0;
     display: flex;
     align-items: center;
-    padding: 4px 10px;
-    font-size: 1.2rem;
+    justify-content: flex-end;
+    padding: 20px 24px;
+    font-size: 2.5rem;
+    font-weight: bold;
     color: var(--text-main);
+    text-align: right;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .scroll-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .scroll-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 2px solid #d4c4b0;
+    background: #f3e1d2;
+    color: var(--text-main);
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    padding: 0;
+  }
+
+  .scroll-btn:hover {
+    background: #e8d0b8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .scroll-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .feedback {
-    margin-top: 10px;
-    min-height: 32px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     text-align: center;
-    font-size: 1.05rem;
+    font-size: 5rem;
+    font-weight: bold;
+    line-height: 1.3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    pointer-events: none;
+    background: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -1px -1px 2px rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    padding: 0 20px;
   }
 
   .feedback.success {
@@ -124,8 +274,122 @@ import Keypad from './Keypad.astro';
     color: var(--danger);
   }
 
-  .bottom-row {
-    margin-top: 10px;
+  .countdown {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    font-size: 8rem;
+    font-weight: bold;
+    color: var(--accent-pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    pointer-events: none;
+    background: transparent;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.9);
+  }
+
+
+  .keypad {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .keypad-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .key-btn {
+    flex: 1;
+    aspect-ratio: 1;
+    border-radius: 16px;
+    border: 2px solid #d4c4b0;
+    padding: 0;
+    font-size: 1.4rem;
+    font-weight: bold;
+    background: #f3e1d2;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* 数字ボタン（0-9）のフォントサイズを大きく */
+  .key-btn[data-key="0"],
+  .key-btn[data-key="1"],
+  .key-btn[data-key="2"],
+  .key-btn[data-key="3"],
+  .key-btn[data-key="4"],
+  .key-btn[data-key="5"],
+  .key-btn[data-key="6"],
+  .key-btn[data-key="7"],
+  .key-btn[data-key="8"],
+  .key-btn[data-key="9"] {
+    font-size: 1.8rem;
+  }
+
+  .key-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: #e8d0b8;
+  }
+
+  .key-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 </style>
+
+<script>
+  // 表示窓のスクロール機能
+  function setupScrollButtons() {
+    const answerDisplay = document.getElementById('answer-display');
+    const scrollUpBtn = document.getElementById('scroll-up');
+    const scrollDownBtn = document.getElementById('scroll-down');
+
+    if (answerDisplay && scrollUpBtn && scrollDownBtn) {
+      scrollUpBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        answerDisplay.scrollTop -= 30;
+      });
+
+      scrollDownBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        answerDisplay.scrollTop += 30;
+      });
+    }
+  }
+
+  // DOMContentLoadedまたは要素が存在するまで待機
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupScrollButtons);
+  } else {
+    // 既にDOMContentLoadedが発火している場合
+    setTimeout(setupScrollButtons, 100);
+  }
+
+  // 画面が表示された時にも再設定
+  const gameScreen = document.querySelector('.game-screen');
+  if (gameScreen) {
+    const observer = new MutationObserver(() => {
+      if (gameScreen.style.display !== 'none') {
+        setTimeout(setupScrollButtons, 100);
+      }
+    });
+    observer.observe(gameScreen, { attributes: true, attributeFilter: ['style'] });
+  }
+</script>
 

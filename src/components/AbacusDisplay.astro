@@ -116,6 +116,9 @@ function getLowerY(col: number, row: number): number {
     position: relative;
     width: 500px;
     height: 700px;
+    overflow: hidden;
+    margin-top: -75px;
+    margin-bottom: -75px;
   }
 
   .dodai {
@@ -128,7 +131,7 @@ function getLowerY(col: number, row: number): number {
     position: absolute;
     width: 108px;
     height: 70px;
-    opacity: 1 !important;
+    opacity: 1;
     pointer-events: none;
     z-index: 10;
     transition: top 0.3s ease;

@@ -1,47 +1,64 @@
 ---
-import AbacusDisplay from "../components/AbacusDisplay.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-
-// 初期値は0（クライアントサイドで更新される）
-const initialValue = 0;
-const initialDigits = 4;
 ---
 
 <BaseLayout>
-<div style="padding: 20px; background: white; min-height: 100vh;">
+<div class="test-screen" style="padding: 20px; min-height: 100vh;">
   <div style="text-align: center; margin-bottom: 20px;">
     <h1 style="font-size: 2rem; margin-bottom: 10px;">そろばん入力テスト</h1>
-    <a href="/" style="display: inline-block; padding: 8px 16px; background: #f4e5d6; color: #333; text-decoration: none; border-radius: 999px; font-size: 0.9rem; transition: background 0.2s;">🏠 ホームに戻る</a>
+    <a href="/" class="btn-back" style="display: inline-block; padding: 8px 16px; background: #8b7e71; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 0.9rem; transition: all 0.15s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); border: 2px solid #6b5f52;">🏠 ホームに戻る</a>
   </div>
-  
-  <div style="display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 40px;">
-    <!-- そろばん表示エリア（上） -->
-    <div style="text-align: center;">
-      <div id="abacusContainer">
-        <AbacusDisplay value={initialValue} digits={initialDigits} />
+
+  <div class="abacus-and-controls">
+    <!-- 左側：そろばんエリア -->
+    <div id="abacus-area" class="abacus-area">
+      <div class="abacus-wrapper">
+        <div id="abacus-display-container"></div>
       </div>
     </div>
-    
-    <!-- 入力欄（下） -->
-    <div style="text-align: center;">
-      <label style="display: block; font-size: 1.2rem; margin-bottom: 10px; font-weight: bold;">
-        4桁の数字を入力してください (0-9999):
-      </label>
-      <input
-        id="numberInput"
-        type="number"
-        min="0"
-        max="9999"
-        placeholder="0000"
-        style="padding: 10px; font-size: 1.5rem; text-align: center; width: 200px; border: 2px solid #333; border-radius: 5px;"
-      />
-      <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">数字を入力すると自動で表示されます</p>
+
+    <!-- 右側：コントロールエリア -->
+    <div class="control-area">
+      <div class="answer-area">
+        <div id="answer-display" class="answer-display">0</div>
+        <div class="scroll-buttons">
+          <button class="scroll-btn" id="scroll-up" aria-label="数字を増やす">▲</button>
+          <button class="scroll-btn" id="scroll-down" aria-label="数字を減らす">▼</button>
+        </div>
+      </div>
+
+      <div class="keypad">
+        <div class="keypad-row">
+          <button class="key-btn" data-key="7">7</button>
+          <button class="key-btn" data-key="8">8</button>
+          <button class="key-btn" data-key="9">9</button>
+        </div>
+        <div class="keypad-row">
+          <button class="key-btn" data-key="4">4</button>
+          <button class="key-btn" data-key="5">5</button>
+          <button class="key-btn" data-key="6">6</button>
+        </div>
+        <div class="keypad-row">
+          <button class="key-btn" data-key="1">1</button>
+          <button class="key-btn" data-key="2">2</button>
+          <button class="key-btn" data-key="3">3</button>
+        </div>
+        <div class="keypad-row">
+          <button class="key-btn" data-key="0">0</button>
+          <button class="key-btn" data-key="del">けす</button>
+          <button class="key-btn" data-key="clear">クリア</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-  // AbacusDisplayのロジックをクライアントサイドで再現
+  // 初期値（クライアントサイドで定義）
+  const INITIAL_VALUE = 0;
+  const INITIAL_DIGITS = 4;
+
+  // gameController.jsと同じ座標設定
   const rodX = [62, 184, 306, 428];
   const tamaWidth = 108;
   const tamaOffsetX = tamaWidth / 2;
@@ -73,17 +90,67 @@ const initialDigits = 4;
     return lowerRestY - (3 - row) * lowerGap;
   }
 
-  function updateAbacus(value) {
-    const digits = value.toString().length;
-    const maxDigits = Math.max(digits, 4);
+  function createAbacusDisplay(value, digits) {
+    const container = document.getElementById('abacus-display-container');
+    if (!container) return;
 
-    // 玉の位置を更新
+    // 既存のそろばんを削除
+    container.innerHTML = '';
+
+    // gameController.jsと同じスタイルを適用
+    const maxDigits = Math.max(digits, 4);
+    const abacusBase = document.createElement('div');
+    abacusBase.className = 'abacus-base';
+    abacusBase.style.cssText = 'position: relative; width: 500px; height: 700px; overflow: hidden; margin-top: -75px; margin-bottom: -75px;';
+    
+    // 土台画像
+    const dodai = document.createElement('img');
+    dodai.src = '/images/dodai.png';
+    dodai.alt = 'そろばんの土台';
+    dodai.className = 'dodai';
+    dodai.style.cssText = 'width: 100%; height: 100%; display: block;';
+    abacusBase.appendChild(dodai);
+
+    // 玉を配置（gameController.jsと同じスタイル）
+    for (let col = 0; col < 4; col++) {
+      // 上玉（五玉）
+      const upperBead = document.createElement('img');
+      upperBead.src = '/images/tama.png';
+      upperBead.alt = 'そろばんの玉（上）';
+      upperBead.setAttribute('class', 'tama upper U' + col);
+      upperBead.setAttribute('data-col', col);
+      upperBead.setAttribute('data-type', 'upper');
+      const upperY = getUpperY(value, maxDigits, col);
+      const upperLeft = rodX[col] - tamaOffsetX;
+      upperBead.style.cssText = 'position: absolute; left: ' + upperLeft + 'px; top: ' + upperY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+      abacusBase.appendChild(upperBead);
+
+      // 下玉（一玉）
+      for (let row = 0; row < 4; row++) {
+        const lowerBead = document.createElement('img');
+        lowerBead.src = '/images/tama.png';
+        lowerBead.alt = 'そろばんの玉（下）';
+        lowerBead.setAttribute('class', 'tama lower L' + col + '_' + row);
+        lowerBead.setAttribute('data-col', col);
+        lowerBead.setAttribute('data-row', row);
+        lowerBead.setAttribute('data-type', 'lower');
+        const lowerY = getLowerY(value, maxDigits, col, row);
+        const lowerLeft = rodX[col] - tamaOffsetX;
+        lowerBead.style.cssText = 'position: absolute; left: ' + lowerLeft + 'px; top: ' + lowerY + 'px; width: 108px; height: 70px; opacity: 1; pointer-events: none; z-index: 10; transition: top 0.3s ease;';
+        abacusBase.appendChild(lowerBead);
+      }
+    }
+
+    container.appendChild(abacusBase);
+  }
+
+  function updateAbacusDisplay(value, digits) {
+    const maxDigits = Math.max(digits, 4);
     for (let col = 0; col < 4; col++) {
       // 上玉
       const upperBead = document.querySelector(`.tama.upper.U${col}`);
       if (upperBead) {
         const y = getUpperY(value, maxDigits, col);
-        upperBead.style.left = `${rodX[col] - tamaOffsetX}px`;
         upperBead.style.top = `${y}px`;
       }
 
@@ -92,59 +159,304 @@ const initialDigits = 4;
         const lowerBead = document.querySelector(`.tama.lower.L${col}_${row}`);
         if (lowerBead) {
           const y = getLowerY(value, maxDigits, col, row);
-          lowerBead.style.left = `${rodX[col] - tamaOffsetX}px`;
           lowerBead.style.top = `${y}px`;
         }
       }
     }
   }
 
-  // DOMContentLoadedを待つ
-  document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('numberInput');
-    
-    // URLパラメータから初期値を設定
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlValue = urlParams.get('value');
-    const initialValue = urlValue ? parseInt(urlValue) || 0 : 0;
-    
-    console.log('[Client] Initial URL value:', urlValue, 'Initial value:', initialValue);
-    
-    if (input) {
-      input.value = initialValue.toString();
+  let currentValue = INITIAL_VALUE;
+  let continuousChangeTimer = null;
+  let continuousChangeInterval = null;
+
+  function incrementAnswer() {
+    const newValue = Math.min(currentValue + 1, 9999);
+    currentValue = newValue;
+    updateDisplay();
+  }
+
+  function decrementAnswer() {
+    const newValue = Math.max(currentValue - 1, 0);
+    currentValue = newValue;
+    updateDisplay();
+  }
+
+  function updateDisplay() {
+    const answerDisplay = document.getElementById('answer-display');
+    if (answerDisplay) {
+      answerDisplay.textContent = currentValue.toString();
     }
     
-    // 初期値をそろばんに反映
-    updateAbacus(initialValue);
-    
-    // 入力欄の値をリアルタイムでモニター
-    input?.addEventListener('input', (e) => {
-      const inputValue = input.value.trim();
-      if (inputValue === '') {
-        updateAbacus(0);
-        return;
-      }
-      const value = parseInt(inputValue, 10);
-      if (!isNaN(value)) {
-        const clampedValue = Math.max(0, Math.min(9999, value));
-        // そろばんをリアルタイムで更新
-        updateAbacus(clampedValue);
-        
-        // URLパラメータを更新（ページリロードなし）
-        const baseUrl = window.location.origin + window.location.pathname;
-        window.history.pushState({}, '', `${baseUrl}?value=${clampedValue}`);
+    const digits = Math.max(currentValue.toString().length, 4);
+    updateAbacusDisplay(currentValue, digits);
+  }
+
+  function startContinuousChange(buttonId) {
+    stopContinuousChange();
+    continuousChangeTimer = setTimeout(() => {
+      continuousChangeInterval = setInterval(() => {
+        if (buttonId === 'scroll-up') {
+          incrementAnswer();
+        } else {
+          decrementAnswer();
+        }
+      }, 100);
+    }, 500);
+  }
+
+  function stopContinuousChange() {
+    if (continuousChangeTimer) {
+      clearTimeout(continuousChangeTimer);
+      continuousChangeTimer = null;
+    }
+    if (continuousChangeInterval) {
+      clearInterval(continuousChangeInterval);
+      continuousChangeInterval = null;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // 初期そろばん表示
+    createAbacusDisplay(INITIAL_VALUE, INITIAL_DIGITS);
+
+    // キーパッド処理
+    document.body.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button) return;
+
+      const key = button.getAttribute('data-key');
+      if (!key) return;
+
+      event.preventDefault();
+
+      if (key === 'del') {
+        const str = currentValue.toString();
+        if (str.length > 1) {
+          currentValue = parseInt(str.slice(0, -1), 10) || 0;
+        } else {
+          currentValue = 0;
+        }
+        updateDisplay();
+      } else if (key === 'clear') {
+        currentValue = 0;
+        updateDisplay();
+      } else if (/^[0-9]$/.test(key)) {
+        if (currentValue === 0) {
+          currentValue = parseInt(key, 10);
+        } else {
+          const newValue = currentValue * 10 + parseInt(key, 10);
+          if (newValue <= 9999) {
+            currentValue = newValue;
+          }
+        }
+        updateDisplay();
       }
     });
+
+    // 上下ボタンの処理
+    const scrollUpBtn = document.getElementById('scroll-up');
+    const scrollDownBtn = document.getElementById('scroll-down');
+
+    if (scrollUpBtn) {
+      scrollUpBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        incrementAnswer();
+        startContinuousChange('scroll-up');
+      });
+      scrollUpBtn.addEventListener('mouseup', stopContinuousChange);
+      scrollUpBtn.addEventListener('mouseleave', stopContinuousChange);
+      scrollUpBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        incrementAnswer();
+        startContinuousChange('scroll-up');
+      });
+      scrollUpBtn.addEventListener('touchend', stopContinuousChange);
+      scrollUpBtn.addEventListener('touchcancel', stopContinuousChange);
+    }
+
+    if (scrollDownBtn) {
+      scrollDownBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        decrementAnswer();
+        startContinuousChange('scroll-down');
+      });
+      scrollDownBtn.addEventListener('mouseup', stopContinuousChange);
+      scrollDownBtn.addEventListener('mouseleave', stopContinuousChange);
+      scrollDownBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        decrementAnswer();
+        startContinuousChange('scroll-down');
+      });
+      scrollDownBtn.addEventListener('touchend', stopContinuousChange);
+      scrollDownBtn.addEventListener('touchcancel', stopContinuousChange);
+    }
   });
 </script>
 
 <style>
-  :global(body) {
-    margin: 0;
+  .test-screen {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* GameScreenと同じ2カラムレイアウト */
+  .abacus-and-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 32px;
+    margin: 20px 0;
+    min-height: 700px;
+  }
+
+  .abacus-area {
+    width: 500px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .abacus-wrapper {
+    width: 500px;
+    height: 700px;
+    position: relative;
+    border: 2px solid #d4c4b0;
+    border-radius: 12px;
+    background: #faf8f5;
+    overflow: hidden;
+  }
+
+  #abacus-display-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .control-area {
+    width: auto;
+    flex: none;
+    min-width: 300px;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  .answer-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .answer-display {
+    flex: 1;
+    min-height: 100px;
+    max-height: 200px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 3px solid #d4c4b0;
+    padding: 20px 24px;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: right;
+    overflow-y: auto;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .scroll-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 8px;
+  }
+
+  .scroll-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #6b5f52;
+    background: #8b7e71;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+
+  .scroll-btn:hover {
+    background: #6b5f52;
+  }
+
+  .keypad {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .keypad-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .key-btn {
+    flex: 1;
+    aspect-ratio: 1;
     padding: 0;
-    background: white;
+    border-radius: 12px;
+    border: 2px solid #6b5f52;
+    background: #f7ebdb;
+    color: #333;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .key-btn:hover {
+    background: #e8d9c5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .key-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-back:hover {
+    background: #6b5f52;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn-back:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 </style>
-</div>
 </BaseLayout>
-

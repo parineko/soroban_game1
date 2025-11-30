@@ -7,13 +7,11 @@
   <div class="panel">
     <p class="big-copy">こんにちは 👋</p>
     <p class="text">
-      ちいさな そろばんの おけいこ アプリだよ 🎀<br>
-      ぱっと ひょうじされる そろばんの かずを よんで<br>
-      したの でんたくで こたえを いれてみよう ✨
+      そろばんの かずを よんで<br>
+      こたえを いれてみよう ✨
     </p>
-    <div class="button-row">
-      <button class="btn primary" data-action="go-howto">あそびかた 💡</button>
-      <button class="btn" data-action="go-level">すぐ はじめる 🎈</button>
+    <div class="button-column">
+      <button class="btn primary" data-action="go-level">すぐ はじめる 🎈</button>
       <a href="/TestZero" class="btn">そろばんテスト 🔢</a>
     </div>
   </div>
@@ -24,64 +22,36 @@
     width: 100%;
   }
 
-  .panel {
-    background: var(--panel-bg);
-    border-radius: 16px;
-    padding: 18px 16px 20px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
-    border: 1px solid var(--border-soft);
-  }
-
   .big-copy {
-    font-size: 1.3rem;
+    font-size: 2rem;
     text-align: center;
-    margin: 4px 0 12px;
+    margin: 8px 0 20px;
     color: var(--text-main);
+    font-weight: bold;
   }
 
   .text {
     text-align: center;
-    line-height: 1.6;
-    font-size: 0.98rem;
+    line-height: 1.8;
+    font-size: 1.5rem;
     color: var(--text-main);
+    margin: 0 0 32px;
+    font-weight: 500;
   }
 
-  .button-row {
+  .button-column {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 16px;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    margin-top: 20px;
   }
 
-  .btn {
-    border: none;
-    border-radius: 999px;
-    padding: 10px 18px;
-    font-size: 0.98rem;
-    cursor: pointer;
-    background: #f4e5d6;
-    color: var(--text-main);
-    min-width: 120px;
-    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-  }
-
-  .btn.primary {
-    background: linear-gradient(135deg, var(--accent-pink), #ffb9de);
-    color: #ffffff;
-  }
-
-  .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
-  }
-
-  .btn:active {
-    transform: translateY(0);
-    box-shadow: none;
+  .button-column .btn {
+    width: 100%;
+    max-width: 280px;
+    font-size: 1.2rem;
+    padding: 16px 24px;
   }
 </style>
 

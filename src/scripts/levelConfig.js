@@ -16,14 +16,14 @@ export const LEVELS = {
     label: "ちゅうきゅう 🌿",
     digits: 2,
     displayTime: 1500,
-    questions: 15,
+    questions: 10,
   },
   hard: {
     key: "hard",
     label: "じょうきゅう ✨",
     digits: 3,
     displayTime: 1000,
-    questions: 20,
+    questions: 10,
   },
 };
 

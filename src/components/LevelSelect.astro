@@ -20,9 +20,30 @@
         <span class="level-note">（3けた・ひょうじ 1びょう）</span>
       </button>
     </div>
-    <p class="small-note">
-      うすい もじは、おとなの かたむけの せつめいです 🍵
-    </p>
+    
+    <div class="custom-level-section">
+      <h3 class="custom-title">カスタム設定 🎨</h3>
+      <div class="custom-controls">
+        <div class="custom-control">
+          <label for="custom-digits">けたすう：</label>
+          <select id="custom-digits" class="custom-select">
+            <option value="1">1けた</option>
+            <option value="2">2けた</option>
+            <option value="3">3けた</option>
+            <option value="4">4けた</option>
+          </select>
+        </div>
+        <div class="custom-control">
+          <label for="custom-time">ひょうじ びょうすう：</label>
+          <input type="number" id="custom-time" class="custom-input" min="0.1" max="10" step="0.1" value="2.0">
+          <span class="custom-unit">びょう</span>
+        </div>
+      </div>
+      <button class="btn level-btn custom-btn" data-level="custom" id="custom-start-btn">
+        カスタムで はじめる 🎨
+      </button>
+    </div>
+    
     <div class="button-row">
       <button class="btn" data-action="back-start">おうちに もどる 🏠</button>
     </div>
@@ -39,8 +60,43 @@
   }
 
   .btn.level-btn {
-    width: 100%;
-    margin-bottom: 8px;
+    width: auto;
+    min-width: 280px;
+    max-width: 400px;
+    margin: 0 auto 12px;
+    padding: 16px 32px;
+    display: block;
+  }
+
+  /* レベルごとの色分け */
+  .btn.level-btn[data-level="easy"] {
+    background: linear-gradient(135deg, #ffb3d9, #ffcce6);
+    border-color: #ff9ecb;
+    color: #8b3a5c;
+  }
+
+  .btn.level-btn[data-level="easy"]:hover {
+    background: linear-gradient(135deg, #ff9ecb, #ffb3d9);
+  }
+
+  .btn.level-btn[data-level="normal"] {
+    background: linear-gradient(135deg, #a8e6cf, #c8f0dd);
+    border-color: #7bc89c;
+    color: #2d5a3d;
+  }
+
+  .btn.level-btn[data-level="normal"]:hover {
+    background: linear-gradient(135deg, #7bc89c, #a8e6cf);
+  }
+
+  .btn.level-btn[data-level="hard"] {
+    background: linear-gradient(135deg, #ffd89b, #ffe5b8);
+    border-color: #ffc966;
+    color: #8b5a2b;
+  }
+
+  .btn.level-btn[data-level="hard"]:hover {
+    background: linear-gradient(135deg, #ffc966, #ffd89b);
   }
 
   .level-note {
@@ -48,6 +104,77 @@
     font-size: 0.8rem;
     color: var(--text-subtle);
     margin-top: 4px;
+    font-weight: normal;
+  }
+
+  .custom-level-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 2px solid var(--border-soft);
+  }
+
+  .custom-title {
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--text-main);
+    margin: 0 0 16px;
+  }
+
+  .custom-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .custom-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .custom-control label {
+    font-size: 1rem;
+    color: var(--text-main);
+    min-width: 140px;
+    text-align: right;
+  }
+
+  .custom-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid #d4c4b0;
+    background: #fff9f0;
+    font-size: 1rem;
+    color: var(--text-main);
+    min-width: 120px;
+  }
+
+  .custom-input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid #d4c4b0;
+    background: #fff9f0;
+    font-size: 1rem;
+    color: var(--text-main);
+    width: 100px;
+    text-align: center;
+  }
+
+  .custom-unit {
+    font-size: 1rem;
+    color: var(--text-main);
+  }
+
+  .btn.level-btn.custom-btn {
+    background: linear-gradient(135deg, #b8a9ff, #d4c8ff);
+    border-color: #9b88e8;
+    color: #4a3a6b;
+  }
+
+  .btn.level-btn.custom-btn:hover {
+    background: linear-gradient(135deg, #9b88e8, #b8a9ff);
   }
 </style>
 
