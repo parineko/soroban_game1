@@ -10,7 +10,11 @@
         <p id="level-label" class="badge">れべる：しょきゅう 🌸</p>
         <p id="question-counter" class="badge">もんすう：1 / 10</p>
       </div>
-      <button class="btn-back" data-action="give-up" aria-label="ホームに戻る">もどる 🏠</button>
+      <div class="game-header-right">
+        <button class="btn-fullscreen" id="fullscreen-btn" aria-label="全画面表示">⛶ ぜんがめん</button>
+        <button class="btn-exit-fullscreen" id="exit-fullscreen-btn" aria-label="全画面を解除" style="display: none;">✕ もどる</button>
+        <button class="btn-back" data-action="give-up" aria-label="ホームに戻る">もどる 🏠</button>
+      </div>
     </div>
 
     <div class="instruction-box">
@@ -98,6 +102,40 @@
   .game-header-left {
     display: flex;
     gap: 6px;
+  }
+
+  .game-header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .btn-fullscreen,
+  .btn-exit-fullscreen {
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: #6b8e23;
+    color: #ffffff;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #556b2f;
+  }
+
+  .btn-fullscreen:hover,
+  .btn-exit-fullscreen:hover {
+    background: #556b2f;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn-fullscreen:active,
+  .btn-exit-fullscreen:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
   .btn-back {
@@ -525,18 +563,38 @@
     }
   }
 
-  // F11キーで全画面切り替え
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'F11') {
-      e.preventDefault();
-      toggleFullscreen();
-    }
-  });
-
-  // 全画面状態の変更を監視
-  document.addEventListener('fullscreenchange', () => {
+  function updateFullscreenButtons() {
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
     const isFullscreen = !!document.fullscreenElement;
-    document.body.classList.toggle('is-fullscreen', isFullscreen);
+    
+    if (fullscreenBtn && exitFullscreenBtn) {
+      if (isFullscreen) {
+        fullscreenBtn.style.display = 'none';
+        exitFullscreenBtn.style.display = 'inline-block';
+      } else {
+        fullscreenBtn.style.display = 'inline-block';
+        exitFullscreenBtn.style.display = 'none';
+      }
+    }
+  }
+
+  // ボタンのクリックイベント
+  document.addEventListener('DOMContentLoaded', () => {
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
+    
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener('click', toggleFullscreen);
+    }
+    
+    if (exitFullscreenBtn) {
+      exitFullscreenBtn.addEventListener('click', toggleFullscreen);
+    }
+    
+    // 全画面状態の変更を監視
+    document.addEventListener('fullscreenchange', updateFullscreenButtons);
+    updateFullscreenButtons();
   });
 </script>
 
