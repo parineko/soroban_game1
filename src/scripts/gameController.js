@@ -294,8 +294,11 @@ export class GameController {
 
     // UI更新
     if (this.questionCounter) {
+      const current = this.questionIndex;
+      const total = this.currentLevel.questions;
+      const gauge = this.createProgressGauge(current, total);
       this.questionCounter.textContent = 
-        `もんすう：${this.questionIndex} / ${this.currentLevel.questions}`;
+        `もんすう：${current} / ${total} ${gauge}`;
     }
     
     if (this.answerDisplay) {
@@ -588,6 +591,20 @@ export class GameController {
       clearInterval(this.continuousChangeInterval);
       this.continuousChangeInterval = null;
     }
+  }
+
+  /**
+   * 進捗ゲージを生成
+   * @param {number} current - 現在の問題番号
+   * @param {number} total - 総問題数
+   * @returns {string} ゲージ文字列
+   */
+  createProgressGauge(current, total) {
+    const completed = Math.max(0, current - 1); // 完了した問題数（現在の問題は含まない）
+    const remaining = total - completed;
+    const completedEmojis = "🧮".repeat(completed);
+    const remainingUnderscores = "＿".repeat(remaining);
+    return completedEmojis + remainingUnderscores;
   }
 
   /**
