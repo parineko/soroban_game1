@@ -1,7 +1,19 @@
 /**
  * global.css
  * 全体の背景クリーム色・パステルUI・共通スタイル
+ * ローカルフォント（ABACUS2.woff）設定済み
  */
+
+/* ★ローカルフォント定義 */
+@font-face {
+  font-family: 'SorobanFont';
+  src: url('/ABACUS2.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  /* ゲーム内でのみ使うので数字限定の指定は不要ですが、念のため */
+  unicode-range: U+0030-0039;
+}
 
 :root {
   --bg-cream: #fff8e6;
@@ -20,10 +32,17 @@
   box-sizing: border-box;
 }
 
-body {
+/* --- 全体のリセットとフォント適用 --- */
+html, body {
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  width: 100%;
+  height: 100%; /* 高さ100%確保 */
+  overflow: hidden; /* スクロール禁止 */
+  
+  /* ★修正：基本は読みやすい「Zen丸ゴシック」にします */
+  font-family: 'Zen Maru Gothic', sans-serif;
+  
   background: var(--bg-cream);
   color: var(--text-main);
 }
@@ -31,18 +50,23 @@ body {
 /* 画面の非表示制御 */
 .screen {
   width: 100%;
+  height: 100%;
 }
 
 .screen[style*="display: none"] {
   display: none !important;
 }
 
-/* 共通ボタンスタイル */
+/* --- 共通ボタンスタイル --- */
 .btn {
   border: none;
   border-radius: 16px;
   padding: 14px 24px;
-  font-size: 1rem;
+  
+  /* ボタンも基本は丸ゴシック */
+  font-family: 'Zen Maru Gothic', sans-serif;
+  
+  font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
   background: #f3e1d2;
@@ -51,8 +75,9 @@ body {
   transition: all 0.15s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-decoration: none;
-  display: inline-block;
-  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   border: 2px solid #d4c4b0;
 }
 
@@ -100,24 +125,16 @@ body {
   color: var(--text-main);
 }
 
+/* --- ★ここ重要：ゲームの特定部分だけそろばんフォントにする --- */
+/* 入力窓(answer-display) と テンキー(key-btn) だけ適用 */
+.answer-display, 
+.key-btn {
+  font-family: 'SorobanFont', sans-serif !important;
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 480px) {
   .panel {
     padding: 14px 12px 16px;
   }
-  
-  .app-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .answer-display {
-    font-size: 1.1rem;
-  }
-  
-  .btn {
-    min-width: 120px;
-    padding: 12px 20px;
-    font-size: 0.95rem;
-  }
 }
-

@@ -1,6 +1,6 @@
 ---
 // BaseLayout.astro
-// 共通レイアウト（背景色・フォント・余白）
+// 共通レイアウト（タイトル折り返し防止版）
 import '../styles/global.css';
 
 interface Props {
@@ -14,10 +14,15 @@ const { showHeader = true } = Astro.props;
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="generator" content={Astro.generator} />
   <title>🧮 そろばん かんたん ゲーム ✨</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  
 </head>
 <body>
   <div class="app-container" class:no-header={!showHeader}>
@@ -36,37 +41,47 @@ const { showHeader = true } = Astro.props;
 
 <style>
   .app-container {
-    min-height: 100vh;
+    height: 100dvh; 
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    
     display: flex;
     flex-direction: column;
     align-items: center;
     background: var(--bg-cream);
-    max-width: 1200px;
-    width: 100%;
-    margin: 0 auto;
+    overflow: hidden;
   }
 
   .app-header {
     text-align: center;
     padding: 12px 12px 4px;
     width: 100%;
+    flex-shrink: 0;
   }
 
   .app-header h1 {
     margin: 0;
-    font-size: 1.8rem;
+    font-family: 'Zen Maru Gothic', sans-serif;
     color: var(--text-main);
+    
+    /* ★修正：折り返しを禁止し、画面幅に応じてサイズを自動調整 */
+    white-space: nowrap;
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
   }
 
   .app-main {
     width: 100%;
+    flex: 1; 
     display: flex;
     justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
   }
 
   .app-container.no-header .app-main {
     padding-top: 0;
+    height: 100%;
   }
-
 </style>
-

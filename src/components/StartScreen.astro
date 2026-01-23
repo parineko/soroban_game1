@@ -1,6 +1,6 @@
 ---
 // StartScreen.astro
-// スタート画面コンポーネント
+// スタート画面コンポーネント（ボタン折り返し修正版）
 ---
 
 <div class="screen start-screen" data-screen="start">
@@ -13,8 +13,6 @@
     <div class="button-column">
       <button class="btn primary" data-action="go-level" aria-label="はじめる">はじめる 🎈</button>
       <a href="/TestZero" class="btn" aria-label="そろばんシミュレーター">そろばんシミュレーター 💻</a>
-      <button class="btn btn-fullscreen" id="fullscreen-btn" aria-label="全画面表示">⛶ ぜんがめん</button>
-      <button class="btn btn-exit-fullscreen" id="exit-fullscreen-btn" aria-label="全画面を解除" style="display: none;">✕ ぜんがめんを やめる</button>
     </div>
   </div>
 </div>
@@ -47,74 +45,21 @@
     gap: 16px;
     align-items: center;
     margin-top: 20px;
+    width: 100%;
   }
 
   .button-column .btn {
-    width: 100%;
-    max-width: 280px;
+    width: auto;      /* 幅を内容に合わせる */
+    min-width: 200px; /* 最低限の幅 */
+    max-width: 100%;
     font-size: 1.2rem;
     padding: 16px 24px;
-  }
-
-  .btn-fullscreen,
-  .btn-exit-fullscreen {
-    background: linear-gradient(135deg, #6b8e23, #556b2f);
-    border-color: #556b2f;
-    color: #ffffff;
-  }
-
-  .btn-fullscreen:hover,
-  .btn-exit-fullscreen:hover {
-    background: linear-gradient(135deg, #556b2f, #4a5a1f);
+    text-decoration: none;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* ★修正：文字の折り返しを禁止 */
+    white-space: nowrap;
   }
 </style>
-
-<script>
-  // 全画面表示機能
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error('全画面表示に失敗:', err);
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  }
-
-  function updateFullscreenButtons() {
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
-    const isFullscreen = !!document.fullscreenElement;
-    
-    if (fullscreenBtn && exitFullscreenBtn) {
-      if (isFullscreen) {
-        fullscreenBtn.style.display = 'none';
-        exitFullscreenBtn.style.display = 'block';
-      } else {
-        fullscreenBtn.style.display = 'block';
-        exitFullscreenBtn.style.display = 'none';
-      }
-    }
-  }
-
-  // ボタンのクリックイベント
-  document.addEventListener('DOMContentLoaded', () => {
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
-    
-    if (fullscreenBtn) {
-      fullscreenBtn.style.display = 'block';
-      fullscreenBtn.addEventListener('click', toggleFullscreen);
-    }
-    
-    if (exitFullscreenBtn) {
-      exitFullscreenBtn.style.display = 'none';
-      exitFullscreenBtn.addEventListener('click', toggleFullscreen);
-    }
-    
-    // 全画面状態の変更を監視
-    document.addEventListener('fullscreenchange', updateFullscreenButtons);
-    updateFullscreenButtons();
-  });
-</script>
-

@@ -1,73 +1,60 @@
 ---
 // GameScreen.astro
-// ゲーム画面コンポーネント
+// PCレイアウト崩れ防止・完全固定版
 ---
 
 <div class="screen game-screen" data-screen="game" style="display: none;">
   <div class="panel game-panel">
+    
     <div class="game-header">
-      <div class="game-header-left">
-        <p id="level-label" class="badge">れべる：しょきゅう 🌸</p>
-        <p id="question-counter" class="badge">もんすう：1 / 10</p>
+      <div class="status-bar">
+        <span id="level-label" class="mini-badge">初級</span>
+        <span id="question-counter" class="mini-badge">1/10</span>
       </div>
-      <div class="game-header-right">
-        <button class="btn-back" data-action="give-up" aria-label="ホームに戻る">もどる 🏠</button>
-      </div>
-    </div>
-
-    <div class="instruction-box">
-      <p class="instruction" id="instruction-text">
-        そろばんの かずを おぼえて<br>
-        みぎの でんたくで こたえを いれてね 💡
-      </p>
+      <button class="btn-back-mini" data-action="give-up">✕</button>
     </div>
 
     <div class="layout-wrapper">
-      <!-- ① フィードバック表示エリア（最上部） -->
-      <div class="feedback-area">
-        <div id="countdown" class="countdown" style="display: none;"></div>
-        <div id="feedback" class="feedback"></div>
+      
+      <div id="abacus-area" class="abacus-area">
+        <div class="abacus-wrapper">
+          <div id="abacus-display-container"></div>
+        </div>
       </div>
 
-      <!-- ②③ そろばんエリア（左）とテンキーエリア（右） -->
-      <div class="main-area">
-        <div id="abacus-area" class="abacus-area">
-          <div class="abacus-wrapper">
-            <!-- そろばんは gameController.js で動的に生成されます -->
-            <div id="abacus-display-container"></div>
+      <div class="keypad-area">
+        <div class="instruction-container">
+          <p id="instruction-text" style="display: none;"></p>
+        </div>
+
+        <div class="answer-row">
+          <div id="answer-display" class="answer-display"></div>
+          <div class="scroll-buttons">
+            <button class="scroll-btn" id="scroll-up">▲</button>
+            <button class="scroll-btn" id="scroll-down">▼</button>
           </div>
         </div>
 
-        <div class="keypad-area">
-          <div class="answer-area">
-            <div id="answer-display" class="answer-display"></div>
-            <div class="scroll-buttons">
-              <button class="scroll-btn" id="scroll-up" aria-label="数字を増やす">▲</button>
-              <button class="scroll-btn" id="scroll-down" aria-label="数字を減らす">▼</button>
-            </div>
+        <div class="keypad">
+          <div class="keypad-row">
+            <button class="key-btn" data-key="7">7</button>
+            <button class="key-btn" data-key="8">8</button>
+            <button class="key-btn" data-key="9">9</button>
           </div>
-
-          <div class="keypad">
-            <div class="keypad-row">
-              <button class="key-btn" data-key="7" aria-label="7">7</button>
-              <button class="key-btn" data-key="8" aria-label="8">8</button>
-              <button class="key-btn" data-key="9" aria-label="9">9</button>
-            </div>
-            <div class="keypad-row">
-              <button class="key-btn" data-key="4" aria-label="4">4</button>
-              <button class="key-btn" data-key="5" aria-label="5">5</button>
-              <button class="key-btn" data-key="6" aria-label="6">6</button>
-            </div>
-            <div class="keypad-row">
-              <button class="key-btn" data-key="1" aria-label="1">1</button>
-              <button class="key-btn" data-key="2" aria-label="2">2</button>
-              <button class="key-btn" data-key="3" aria-label="3">3</button>
-            </div>
-            <div class="keypad-row">
-              <button class="key-btn" data-key="0" aria-label="0">0</button>
-              <button class="key-btn" data-key="del" aria-label="けす">けす</button>
-              <button class="key-btn" data-key="enter" aria-label="けってい">けってい</button>
-            </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="4">4</button>
+            <button class="key-btn" data-key="5">5</button>
+            <button class="key-btn" data-key="6">6</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="1">1</button>
+            <button class="key-btn" data-key="2">2</button>
+            <button class="key-btn" data-key="3">3</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="0">0</button>
+            <button class="key-btn action" data-key="del">けす</button>
+            <button class="key-btn action enter" id="enter-btn" data-key="enter">けってい</button>
           </div>
         </div>
       </div>
@@ -76,481 +63,168 @@
 </div>
 
 <style>
-  /* ゲーム画面ではヘッダーを非表示 */
-  :global(body.game-screen-active .app-header) {
-    display: none !important;
-  }
+  /* --- 基本設定 --- */
+  :global(body.game-screen-active) { /* 親で制御 */ }
+  :global(body.game-screen-active .app-header) { display: none !important; }
 
   .game-screen {
-    width: 100%;
+    height: 100%; width: 100%;
+    display: flex; flex-direction: column;
   }
 
   .game-panel {
-    padding-bottom: 14px;
+    height: 100%; width: 100%;
+    padding: 10px; box-sizing: border-box;
+    display: flex; flex-direction: column;
+    background: #faf8f5;
+    border: none; border-radius: 0; 
   }
 
   .game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5px; height: 40px; flex-shrink: 0;
+  }
+  .status-bar { display: flex; gap: 5px; }
+  .mini-badge {
+    background: #e8d0b8; padding: 4px 8px; border-radius: 4px;
+    font-size: 0.9rem; font-weight: bold; color: #5d4037;
+    font-family: 'SorobanFont', sans-serif !important;
+  }
+  .btn-back-mini {
+    background: #8b7e71; color: #fff; border: none; border-radius: 4px;
+    width: 32px; height: 32px; font-weight: bold; cursor: pointer;
   }
 
-  .game-header-left {
-    display: flex;
-    gap: 6px;
-  }
-
-  .game-header-right {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .btn-fullscreen,
-  .btn-exit-fullscreen {
-    border: none;
-    border-radius: 12px;
-    padding: 10px 18px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    background: #6b8e23;
-    color: #ffffff;
-    transition: all 0.15s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border: 2px solid #556b2f;
-    white-space: nowrap;
-    display: inline-block;
-  }
-
-  .btn-fullscreen:hover,
-  .btn-exit-fullscreen:hover {
-    background: #556b2f;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
-  }
-
-  .btn-fullscreen:active,
-  .btn-exit-fullscreen:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  }
-
-  .btn-back {
-    border: none;
-    border-radius: 12px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    background: #8b7e71;
-    color: #ffffff;
-    transition: all 0.15s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border: 2px solid #6b5f52;
-  }
-
-  .btn-back:hover {
-    background: #6b5f52;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
-  }
-
-  .btn-back:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  }
-
-  .badge {
-    background: #f7ebdb;
-    border-radius: 999px;
-    padding: 4px 10px;
-    font-size: 0.82rem;
-    color: var(--text-subtle);
-  }
-
-  /* レイアウトラッパー */
+  /* --- レイアウト --- */
   .layout-wrapper {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    align-items: center;
-    gap: 0;
+    display: flex; flex-direction: column;
+    flex: 1; height: 100%; overflow: hidden; gap: 10px;
   }
 
-  /* ① フィードバック表示エリア（最上部） */
-  .feedback-area {
-    width: 100%;
-    height: 120px;
-    min-height: 120px;
-    max-height: 120px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    flex-shrink: 0;
-    overflow: hidden;
-    margin-bottom: 10px;
-  }
-
-  /* ②③ メインエリア（そろばんとテンキー） */
-  .main-area {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-    width: 100%;
-    max-width: 1200px;
-    align-items: start;
-    flex-shrink: 0;
-  }
-
-  /* 左側：そろばんエリア（50%） */
+  /* スマホ用：均等割り */
   .abacus-area {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 0;
-    margin: 0;
+    flex: 1 1 50%; /* widthがなくても50%確保 */
     width: 100%;
+    position: relative; display: flex; justify-content: center; align-items: center;
+    background: #fff; border: 2px solid #d4c4b0; border-radius: 8px;
+    box-sizing: border-box; min-height: 0;
   }
-
   .abacus-wrapper {
-    width: 100%;
-    max-width: 500px;
-    position: relative;
-    border: 2px solid #d4c4b0;
-    border-radius: 12px;
-    background: #faf8f5;
-    overflow: hidden;
-    padding: 0;
-    margin: 0;
-    aspect-ratio: 500 / 700;
-    max-height: 600px;
+    width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
   }
-
   #abacus-display-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 0;
-    margin: 0;
+    width: 100%; height: 100%; min-height: 100px;
+    display: flex; align-items: center; justify-content: center;
   }
 
-  /* 右側：テンキーエリア（50%） */
   .keypad-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 20px;
+    flex: 1 1 50%;
     width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
+    display: flex; flex-direction: column; gap: 8px; min-height: 0;
   }
 
-  .instruction-box {
-    text-align: center;
-    margin-top: 2px;
+  .instruction-container {
+    min-height: 1.6em;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #instruction-text {
+    font-size: 1rem; text-align: center; color: #8b7e71;
+    margin: 0; font-weight: bold;
+    font-family: 'SorobanFont', sans-serif !important;
+  }
+  :global(#instruction-text.result-msg) {
+    font-size: 1.2rem; color: #4b3b30;
   }
 
-  .instruction {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--text-main);
-  }
-
-  .answer-area {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
+  .answer-row {
+    display: flex; gap: 5px;
+    height: 18%; min-height: 50px; flex-shrink: 0;
   }
 
   .answer-display {
     flex: 1;
-    min-height: 100px;
-    max-height: 200px;
-    border-radius: 12px;
-    border: 1px solid var(--border-soft);
-    background: #fff9f0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 20px 24px;
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: var(--text-main);
-    text-align: right;
-    overflow-y: auto;
-    overflow-x: hidden;
+    background: #fff; border: 2px solid #f0e0c8; border-radius: 8px;
+    font-size: 2.5rem; padding: 0 10px;
+    display: flex; align-items: center; justify-content: flex-end;
+    overflow: hidden; white-space: nowrap; color: #4b3b30;
+    transition: background-color 0.3s ease;
+    font-family: 'SorobanFont', sans-serif !important;
+  }
+
+  :global(.answer-display.center-mode) { justify-content: center !important; }
+  :global(.answer-display.success) {
+    background-color: #e8f5e9; border-color: #63c27b; color: #2e7d32;
+  }
+  :global(.answer-display.error) {
+    background-color: #ffebee; border-color: #ff7b7b; color: #c62828;
   }
 
   .scroll-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    display: flex; flex-direction: column; width: 55px; gap: 2px;
   }
-
   .scroll-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 2px solid #d4c4b0;
-    background: #f3e1d2;
-    color: var(--text-main);
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
-    padding: 0;
+    flex: 1; background: #f3e1d2; border: 1px solid #d4c4b0;
+    border-radius: 4px; font-size: 1.2rem; color: #5d4037;
   }
-
-  .scroll-btn:hover {
-    background: #e8d0b8;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .scroll-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  .feedback {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    font-size: 4rem;
-    font-weight: bold;
-    line-height: 1.2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -1px -1px 2px rgba(255, 255, 255, 0.8);
-    white-space: nowrap;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    pointer-events: none;
-  }
-
-  .feedback.success {
-    color: var(--success);
-  }
-
-  .feedback.error {
-    color: var(--danger);
-  }
-
-  .countdown {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    text-align: center;
-    font-size: 8rem;
-    font-weight: bold;
-    color: var(--accent-pink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1001;
-    pointer-events: none;
-    background: transparent;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.9);
-  }
-
 
   .keypad {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex-shrink: 0;
-    width: 100%;
-    max-width: 350px;
+    flex: 1; display: flex; flex-direction: column; gap: 6px; padding-bottom: 5px;
   }
-
-  .keypad-row {
-    display: flex;
-    gap: 10px;
-  }
-
+  .keypad-row { flex: 1; display: flex; gap: 6px; }
   .key-btn {
-    flex: 1;
-    aspect-ratio: 1;
-    border-radius: 16px;
-    border: 2px solid #d4c4b0;
-    padding: 0;
-    font-size: 1.4rem;
-    font-weight: bold;
-    background: #f3e1d2;
-    color: var(--text-main);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    max-width: 100%;
+    flex: 1; border: none; border-radius: 8px;
+    background: #fff8e6; border-bottom: 4px solid #e0d0b8;
+    font-size: 1.8rem; font-weight: bold; color: #4b3b30;
+    cursor: pointer; touch-action: manipulation;
+    font-family: 'SorobanFont', sans-serif !important;
   }
-
-  /* 数字ボタン（0-9）のフォントサイズを大きく */
-  .key-btn[data-key="0"],
-  .key-btn[data-key="1"],
-  .key-btn[data-key="2"],
-  .key-btn[data-key="3"],
-  .key-btn[data-key="4"],
-  .key-btn[data-key="5"],
-  .key-btn[data-key="6"],
-  .key-btn[data-key="7"],
-  .key-btn[data-key="8"],
-  .key-btn[data-key="9"] {
-    font-size: 2.2rem;
-  }
-
-  .key-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    background: #e8d0b8;
-  }
-
   .key-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transform: translateY(2px); border-bottom-width: 2px; background: #f3e1d2;
+  }
+  .key-btn.action { font-size: 1.3rem; background: #e8d0b8; border-bottom-color: #cbb094; }
+  .key-btn.enter { 
+    background: #ff9ecb; color: white; border-bottom-color: #ff7bb0; font-size: 1.3rem; 
+  }
+  :global(.key-btn.enter.next-mode) {
+    background: #63c27b !important; border-bottom-color: #4da864 !important;
   }
 
-  /* レスポンシブ対応 */
-  @media (max-width: 1024px) {
-    .main-area {
-      gap: 10px;
-    }
-  }
-
-  /* 小さい画面（高さが足りない場合）用のスケール調整 */
-  @media (max-height: 800px) {
+  /* --- ★PC対応：ここが修正ポイント --- */
+  @media (min-width: 768px) {
     .layout-wrapper {
-      transform: scale(0.85);
-      transform-origin: top center;
+      flex-direction: row; /* 横並び */
+      align-items: center;
+      max-width: 1000px;
+      margin: 0 auto;
     }
-  }
-
-  @media (max-height: 700px) {
-    .layout-wrapper {
-      transform: scale(0.75);
-      transform-origin: top center;
+    .game-panel {
+      padding: 20px; height: auto; min-height: 90vh;
+      border-radius: 16px; border: 1px solid #f0e0c8;
     }
-  }
-
-  @media (max-width: 768px) {
-    .main-area {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-
-    .abacus-wrapper {
-      max-width: 100%;
-    }
-
-    .keypad {
-      max-width: 100%;
-    }
-
-    .feedback {
-      font-size: 3rem;
-    }
-
-    .countdown {
-      font-size: 5rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .feedback {
-      font-size: 2rem;
-      min-height: 60px;
-      padding: 5px 10px;
-    }
-
-    .countdown {
-      font-size: 4rem;
-    }
-
-    .abacus-wrapper {
-      max-width: 100%;
-    }
-
-    .keypad {
-      gap: 8px;
-    }
-
-    .key-btn {
-      font-size: 1.2rem;
-    }
-
-    .key-btn[data-key="0"],
-    .key-btn[data-key="1"],
-    .key-btn[data-key="2"],
-    .key-btn[data-key="3"],
-    .key-btn[data-key="4"],
-    .key-btn[data-key="5"],
-    .key-btn[data-key="6"],
-    .key-btn[data-key="7"],
-    .key-btn[data-key="8"],
-    .key-btn[data-key="9"] {
-      font-size: 1.4rem;
+    .abacus-area, .keypad-area {
+      /* ★重要：flex-basisを50%にし、高さも固定して潰れ防止 */
+      flex: 1 1 50%;
+      height: 550px;
+      width: 100%;
     }
   }
 </style>
 
 <script>
-  // ゲーム画面が表示されている時にヘッダーを非表示にする
   function toggleHeader() {
     const gameScreen = document.querySelector('.game-screen');
-    if (gameScreen) {
-      const isVisible = gameScreen.style.display !== 'none' && 
-                       gameScreen.style.display !== '' &&
-                       window.getComputedStyle(gameScreen).display !== 'none';
-      
-      if (isVisible) {
-        document.body.classList.add('game-screen-active');
-      } else {
-        document.body.classList.remove('game-screen-active');
-      }
+    if (gameScreen && getComputedStyle(gameScreen).display !== 'none') {
+      document.body.classList.add('game-screen-active');
+    } else {
+      document.body.classList.remove('game-screen-active');
     }
   }
-
-  // 初期化と監視
   document.addEventListener('DOMContentLoaded', () => {
     toggleHeader();
-    
-    // MutationObserver で display の変更を監視
-    const observer = new MutationObserver(() => {
-      toggleHeader();
-    });
-
-    const gameScreen = document.querySelector('.game-screen');
-    if (gameScreen) {
-      observer.observe(gameScreen, {
-        attributes: true,
-        attributeFilter: ['style']
-      });
-    }
+    new MutationObserver(toggleHeader).observe(
+      document.querySelector('.game-screen'), 
+      { attributes: true, attributeFilter: ['style'] }
+    );
   });
-
 </script>
-

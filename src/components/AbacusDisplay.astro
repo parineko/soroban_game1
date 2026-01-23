@@ -1,7 +1,7 @@
 ---
 // AbacusDisplay.astro
-// そろばん表示コンポーネント（画像ベース）
-// 4桁（4列）× 各5個（上玉1個+下玉4個）= 20個の玉を常に表示
+// 【決定版】スタイル干渉を無視して強制的にレスポンシブ化する記述
+
 interface Props {
   value?: number;
   digits?: number;
@@ -9,175 +9,95 @@ interface Props {
 
 const { value = 0, digits = 1 } = Astro.props;
 
-// 棒の中心X座標（4本分、500px基準）
-// 各棒の中心位置を正確に指定（TestZero.astroと同じ値）
-const rodX = [61, 185, 308, 432]; // px値（計算用、TestZero.astroと同じ）
-const rodXPercent = [12.2, 37.0, 61.6, 86.4]; // パーセント値
+// --- 座標とサイズ設定（%指定） ---
+// 珠の幅を19%に設定（これをHTMLに直接埋め込みます）
+const TAMA_WIDTH = 19.0;
+const TAMA_OFFSET = TAMA_WIDTH / 2;
 
-// 玉画像の幅（tama.png = 108px、500px基準）
-const tamaWidth = 108; // px値（計算用）
-const tamaWidthPercent = 21.6; // パーセント値（108/500）
-// 玉の中心を棒の中心に合わせるためのオフセット
-const tamaOffsetX = tamaWidth / 2; // 54px（計算用）
-const tamaOffsetXPercent = tamaWidthPercent / 2; // 10.8%（相対値）
+// 棒の位置 (%)
+const ROD_X = [15, 38, 61, 84];
 
-// 五玉（上玉）のY座標（TestZero.astroと同じ値）
-const upperRestY = 80;     // 休み位置（一番上、梁から離れた位置）
-const upperActiveY = 117;  // active位置（梁に寄る位置）
+// Y座標 (%)
+const Y = {
+  upperRest: 11.43,
+  upperActive: 16.71,
+  lowerRest: 64.0,
+  lowerActiveStart: 29.29,
+  lowerGap: 9.29
+};
 
-// 下玉（一玉×4）のY座標（TestZero.astroと同じ値）
-const lowerRestY = 448;            // 休み位置の一番下（row 3の位置）
-const lowerActiveStartY = 205;     // active開始位置（梁のすぐ下）
-const lowerGap = 65;               // 下玉の上下間隔
-
-// 値を各桁に分解
-// 右端（col=3）が一の位になるようにする
-// 例: value=1234, digits=4 → digitArray=[1,2,3,4] → col=0:千の位, col=1:百の位, col=2:十の位, col=3:一の位
+// --- 計算ロジック ---
 const str = value.toString().padStart(digits, "0");
 const digitArray = Array.from(str).map(char => parseInt(char, 10));
 
-// 各列のdigitを取得（存在しない列は0として扱う）
-// 右端（col=3）が一の位になるようにする
-// 4列固定なので、右端（col=3）がdigitArrayの最後（一の位）を参照する
-// digits=1の場合: col=3→digitArray[0](一の位)
-// digits=4の場合: col=0→digitArray[0](千), col=1→digitArray[1](百), col=2→digitArray[2](十), col=3→digitArray[3](一)
 function getDigit(col: number): number {
-  // 右端（col=3）が一の位になるように、colを右から数えた位置に変換
-  // col=0,1,2,3 → 右から数えて3,2,1,0 → digitArrayのインデックスに変換
-  // 例: value=10, digits=2, digitArray=[1,0]
-  // col=3 (右端) → rightToLeftIndex=0 → arrayIndex=2-1-0=1 → digitArray[1]=0 (一の位) ✓
-  // col=2 → rightToLeftIndex=1 → arrayIndex=2-1-1=0 → digitArray[0]=1 (十の位) ✓
-  const rightToLeftIndex = 3 - col; // 右端が0、左端が3
-  const arrayIndex = digits - 1 - rightToLeftIndex; // digitArrayのインデックス
-  const result = arrayIndex >= 0 && arrayIndex < digitArray.length ? digitArray[arrayIndex] : 0;
-  return result;
+  const idx = digits - 1 - (3 - col);
+  return idx >= 0 && idx < digitArray.length ? digitArray[idx] : 0;
 }
 
-// 各列の五玉のY座標を計算
 function getUpperY(col: number): number {
-  return getDigit(col) >= 5 ? upperActiveY : upperRestY;
+  return getDigit(col) >= 5 ? Y.upperActive : Y.upperRest;
 }
 
-// 各列の下玉のY座標を計算
 function getLowerY(col: number, row: number): number {
   const digit = getDigit(col);
   const ones = digit % 5;
-  
-  // row < ones の場合はactive位置（梁の近く）
-  // 上から ones 個だけ activePositionY に移動
-  if (row < ones) {
-    return lowerActiveStartY + row * lowerGap;
-  }
-  
-  // rest位置: 一番下に4段きれいに均等に並ぶ
-  // row 0 → 一番上の下玉（lowerRestY - 3 * lowerGap）
-  // row 1 → その下（lowerRestY - 2 * lowerGap）
-  // row 2 → その下（lowerRestY - 1 * lowerGap）
-  // row 3 → 一番下（lowerRestY）
-  // row 0,1,2,3 がそのまま上→下の順で規則正しく均等に並ぶ
-  // lowerRestYを基準にして計算する
-  return lowerRestY - (3 - row) * lowerGap;
+  if (row < ones) return Y.lowerActiveStart + row * Y.lowerGap;
+  return Y.lowerRest - (3 - row) * Y.lowerGap;
 }
 ---
 
 <div class="abacus-base">
-  <img src="/images/dodai.png" alt="そろばんの土台" class="dodai" loading="eager" />
+  <img src="/images/dodai.png" alt="土台" class="dodai" />
 
-  <!-- 4列分の玉を配置: 各列に上玉1個 + 下玉4個 = 5個ずつ -->
   {Array.from({ length: 4 }, (_, col) => (
     <>
-      <!-- 上玉（五玉）: 列 col -->
       <img 
         src="/images/tama.png" 
-        alt="そろばんの玉（上）" 
-        class={`tama upper U${col}`}
-        data-col={col}
-        data-type="upper"
-        style={`left: ${rodX[col] - tamaOffsetX}px; top: ${getUpperY(col)}px;`}
+        class="tama"
+        style={`
+          left: ${ROD_X[col] - TAMA_OFFSET}%; 
+          top: ${getUpperY(col)}%;
+          width: ${TAMA_WIDTH}%; 
+        `}
       />
       
-      <!-- 下玉（一玉×4）: 列 col の4段 -->
       {Array.from({ length: 4 }, (_, row) => (
         <img 
           src="/images/tama.png" 
-          alt="そろばんの玉（下）" 
-          class={`tama lower L${col}_${row}`}
-          data-col={col}
-          data-row={row}
-          data-type="lower"
-          style={`left: ${rodX[col] - tamaOffsetX}px; top: ${getLowerY(col, row)}px;`}
+          class="tama"
+          style={`
+            left: ${ROD_X[col] - TAMA_OFFSET}%; 
+            top: ${getLowerY(col, row)}%;
+            width: ${TAMA_WIDTH}%; 
+          `}
         />
       ))}
     </>
   ))}
 </div>
 
-<script>
-  // 画像読み込みエラー処理
-  function setupImageErrorHandler(img) {
-    if (img && !img.onerror) {
-      img.onerror = () => {
-        console.error("画像読み込みに失敗:", img.src);
-        // フォールバック画像があれば差し替え、無ければ無視
-      };
-    }
-  }
-
-  // DOMContentLoaded後にすべての画像にエラーハンドラーを設定
-  document.addEventListener('DOMContentLoaded', () => {
-    const abacusBase = document.querySelector('.abacus-base');
-    if (abacusBase) {
-      const images = abacusBase.querySelectorAll('img');
-      images.forEach(setupImageErrorHandler);
-    }
-  });
-</script>
-
 <style>
   .abacus-base {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
-    height: 100%;
-    overflow: hidden;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    /* 高さは指定しない！土台画像のアスペクト比に任せる */
+    max-width: 500px; 
+    margin: 0 auto;
   }
 
   .dodai {
     display: block;
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: center;
-    margin: 0;
+    height: auto; /* ここが重要：幅に合わせて高さが変わる */
   }
 
   .tama {
     position: absolute;
-    width: 108px;
-    height: 70px;
-    opacity: 1;
+    height: auto; /* 幅に合わせて高さが変わる */
     pointer-events: none;
     z-index: 10;
-    transition: top 0.3s ease;
-  }
-
-  /* レスポンシブ対応 */
-  @media (max-width: 600px) {
-    .abacus-base {
-      width: 100%;
-      max-width: 500px;
-      height: auto;
-      aspect-ratio: 500 / 700;
-    }
-
-    .dodai {
-      width: 100%;
-      height: auto;
-    }
+    transition: top 0.2s;
+    /* width は style属性で直書きしているのでここでは不要 */
   }
 </style>
