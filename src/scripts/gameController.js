@@ -1,6 +1,6 @@
 /**
  * gameController.js
- * PCレイアウト修正 & カウントダウン表示安定版
+ * そろばん表示のはみ出し防止（aspect-ratio対応版）
  */
 import { LEVELS, RESULT_MESSAGES } from './levelConfig.js';
 
@@ -202,11 +202,10 @@ export class GameController {
   }
 
   startCountdown() {
-    // ★ここ重要：カウントダウン中もエリアを確保して表示する
     if(this.abacusDisplayContainer) {
        this.abacusDisplayContainer.innerHTML = '';
        this.abacusDisplayContainer.style.display = "flex";
-       this.abacusDisplayContainer.style.height = "100%"; // 高さを明示
+       this.abacusDisplayContainer.style.height = "100%";
     }
     if(this.abacusArea) {
       this.abacusArea.style.display = "flex";
@@ -456,14 +455,25 @@ export class GameController {
 
     const abacusBase = document.createElement('div');
     abacusBase.className = 'abacus-base';
-    abacusBase.style.cssText = 'position: relative; width: 100%; height: auto; margin: 0 auto; max-width: 500px; overflow: visible;';
+    
+    // ★ここが重要修正ポイント！
+    // 縦横比（aspect-ratio）を指定して、親要素からはみ出ないように制御します
+    abacusBase.style.cssText = `
+      position: relative;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: 500/415; /* そろばん画像の縦横比に合わせて設定 */
+      margin: 0 auto;
+    `;
     
     const dodai = document.createElement('img');
     dodai.src = '/images/dodai.png';
     dodai.alt = 'そろばんの土台';
     dodai.className = 'dodai';
     dodai.loading = 'eager';
-    dodai.style.cssText = 'display: block; width: 100%; height: auto;';
+    dodai.style.cssText = 'display: block; width: 100%; height: 100%;';
     setupImageErrorHandler(dodai);
     abacusBase.appendChild(dodai);
     
