@@ -1,6 +1,6 @@
 ---
 // GameScreen.astro
-// 問数表示のフォント修正版
+// PCレイアウト最適化版（テンキー幅固定・そろばん拡大）
 ---
 
 <div class="screen game-screen" data-screen="game" style="display: none;">
@@ -91,12 +91,9 @@
     font-family: 'SorobanFont', sans-serif !important;
   }
 
-  /* ★ここが修正ポイント：問数カウンターだけ普通のフォントにする */
   #question-counter {
-    /* 標準的なゴシック体を指定 */
-    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif !important;
-    font-size: 1rem; /* サイズも少し大きくして読みやすく */
-    letter-spacing: 0.5px;
+    font-family: "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 1rem; letter-spacing: 0.5px;
   }
 
   .btn-back-mini {
@@ -104,16 +101,15 @@
     width: 32px; height: 32px; font-weight: bold; cursor: pointer;
   }
 
-  /* --- レイアウト --- */
+  /* --- レイアウト（スマホ・デフォルト） --- */
   .layout-wrapper {
     display: flex;
     flex-direction: column;
     flex: 1; height: 100%; overflow: hidden; gap: 10px;
   }
 
-  /* そろばんエリア */
   .abacus-area {
-    flex: 1 1 50%;
+    flex: 1; /* 余ったスペースを使う */
     width: 100%;
     position: relative; 
     display: flex; justify-content: center; align-items: center;
@@ -122,33 +118,30 @@
 
   .abacus-wrapper {
     width: 100%;
+    /* 縦横比を維持しつつ最大化 */
     aspect-ratio: 100 / 85; 
-    max-width: 500px;
     max-height: 100%;
+    max-width: 500px; /* スマホでは広がりすぎないように */
     display: flex; justify-content: center; align-items: center;
   }
 
   #abacus-display-container {
-    width: 100%;
-    height: 100%;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
   }
   
   :global(#abacus-display-container svg) {
-    width: 100%;
-    height: 100%;
-    display: block;
+    width: 100%; height: 100%; display: block;
   }
 
-  /* キーパッドエリア */
+  /* テンキーエリア */
   .keypad-area {
-    flex: 1 1 50%;
+    /* スマホでは下部に配置、高さは内容なり */
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
     display: flex; flex-direction: column; gap: 8px; min-height: 0;
+    flex-shrink: 0; /* 縮ませない */
   }
 
   .instruction-container {
@@ -172,8 +165,7 @@
   .answer-display {
     flex: 1;
     background: #fff; border: 2px solid #f0e0c8; border-radius: 8px;
-    font-size: 2.5rem;
-    padding: 0 10px;
+    font-size: 2.5rem; padding: 0 10px;
     display: flex; align-items: center; justify-content: flex-end;
     overflow: hidden; white-space: nowrap; color: #4b3b30;
     transition: background-color 0.3s ease;
@@ -182,8 +174,7 @@
 
   :global(.answer-display.center-mode) { justify-content: center !important; }
   :global(.answer-display.success) {
-    background-color: #e8f5e9;
-    border-color: #63c27b; color: #2e7d32;
+    background-color: #e8f5e9; border-color: #63c27b; color: #2e7d32;
   }
   :global(.answer-display.error) {
     background-color: #ffebee; border-color: #ff7b7b; color: #c62828;
@@ -194,8 +185,7 @@
   }
   .scroll-btn {
     flex: 1; background: #f3e1d2; border: 1px solid #d4c4b0;
-    border-radius: 4px; font-size: 1.2rem;
-    color: #5d4037;
+    border-radius: 4px; font-size: 1.2rem; color: #5d4037;
   }
 
   .keypad {
@@ -203,8 +193,7 @@
   }
   .keypad-row { flex: 1; display: flex; gap: 6px; }
   .key-btn {
-    flex: 1;
-    border: none; border-radius: 8px;
+    flex: 1; border: none; border-radius: 8px;
     background: #fff8e6; border-bottom: 4px solid #e0d0b8;
     font-size: 1.8rem; font-weight: bold; color: #4b3b30;
     cursor: pointer; touch-action: manipulation;
@@ -215,29 +204,50 @@
   }
   .key-btn.action { font-size: 1.3rem; background: #e8d0b8; border-bottom-color: #cbb094; }
   .key-btn.enter { 
-    background: #ff9ecb;
-    color: white; border-bottom-color: #ff7bb0; font-size: 1.3rem; 
+    background: #ff9ecb; color: white; border-bottom-color: #ff7bb0; font-size: 1.3rem; 
   }
   :global(.key-btn.enter.next-mode) {
     background: #63c27b !important; border-bottom-color: #4da864 !important;
   }
 
+  /* --- ★PC対応（横長画面）のレイアウト修正 --- */
   @media (min-width: 768px) {
     .layout-wrapper {
-      flex-direction: row;
-      align-items: center;
-      max-width: 1000px;
+      flex-direction: row; /* 横並び */
+      align-items: center; /* 縦中央揃え */
+      gap: 30px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .game-panel {
+      padding: 20px; 
+      height: auto; 
+      min-height: 100vh; /* 画面いっぱいに */
+      border-radius: 0;
+    }
+
+    /* そろばんエリア：残りの幅いっぱい使う */
+    .abacus-area {
+      flex: 2; /* 2の比率で広く */
+      height: auto;
+      aspect-ratio: auto; /* 比率はラッパー任せ */
+      max-width: none; /* 制限解除 */
+    }
+    
+    /* そろばんラッパー：PCでは少し大きく表示可能に */
+    .abacus-wrapper {
+      max-width: 700px;
       margin: 0 auto;
     }
-    .game-panel {
-      padding: 20px; height: auto; min-height: 90vh;
-      border-radius: 16px;
-      border: 1px solid #f0e0c8;
-    }
-    .abacus-area, .keypad-area {
-      flex: 1 1 50%;
-      height: 550px;
-      width: 100%;
+
+    /* テンキーエリア：幅を固定して巨大化を防ぐ */
+    .keypad-area {
+      flex: 1; /* 1の比率 */
+      max-width: 360px; /* ★ここで幅制限！スマホサイズ感を維持 */
+      height: 550px; /* 高さは確保 */
+      margin: 0; /* 中央寄せ解除（Flexで制御） */
     }
   }
 </style>

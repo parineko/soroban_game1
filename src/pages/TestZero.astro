@@ -1,6 +1,6 @@
 ---
 // TestZero.astro
-// そろばんコアエンジン完成版（タッチ操作・双方向同期・クラス化済み）
+// PCレイアウト最適化版
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
@@ -68,7 +68,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 </div>
 
 <script>
-/**
+  // ...（前のコードと同じ）...
+  // 念のためSorobanEngineクラスなどはそのまま残しておいてください
+  /**
  * SorobanEngine
  * そろばんの描画・操作・状態管理を行うコアクラス
  */
@@ -76,7 +78,7 @@ class SorobanEngine {
   constructor(containerId, config, onChangeCallback) {
     this.container = document.getElementById(containerId);
     this.config = config;
-    this.onChange = onChangeCallback; // 値が変わった時に呼ばれる関数
+    this.onChange = onChangeCallback; 
     this.currentValue = 0;
     this.digits = config.digits || 5;
     
@@ -85,7 +87,6 @@ class SorobanEngine {
     }
   }
 
-  // 初期化（SVGの生成）
   init() {
     this.container.innerHTML = '';
     const C = this.config;
@@ -98,26 +99,20 @@ class SorobanEngine {
     svg.style.width = "100%";
     svg.style.height = "100%";
     
-    // --- 背景描画 ---
     this.drawBackground(svg, ns, totalWidth, totalHeight);
 
-    // --- 玉の生成 ---
     for (let col = 0; col < this.digits; col++) {
       const cx = (col * C.widthPerDigit) + (C.widthPerDigit / 2);
       const beadX = cx - (C.bead.width / 2);
 
-      // 五玉
       const upperBead = this.createBead(ns, beadX, C.y.upperRest, `upper-${col}`);
-      // クリックイベント設定
       upperBead.style.cursor = "pointer";
       upperBead.addEventListener('click', () => this.handleBeadClick(col, 'upper', 0));
       svg.appendChild(upperBead);
 
-      // 一玉
       for (let row = 0; row < 4; row++) {
         const lowerY = C.y.lowerBase + (row * C.y.lowerGap);
         const lowerBead = this.createBead(ns, beadX, lowerY, `lower-${col}-${row}`);
-        // クリックイベント設定
         lowerBead.style.cursor = "pointer";
         lowerBead.addEventListener('click', () => this.handleBeadClick(col, 'lower', row));
         svg.appendChild(lowerBead);
@@ -140,26 +135,15 @@ class SorobanEngine {
       return rect;
     };
 
-    // 枠
-    svg.appendChild(createRect(0, 0, w, 10, C.colors.frame)); // 上
-    svg.appendChild(createRect(0, h - 10, w, 10, C.colors.frame)); // 下
-
-    // 梁
+    svg.appendChild(createRect(0, 0, w, 10, C.colors.frame));
+    svg.appendChild(createRect(0, h - 10, w, 10, C.colors.frame));
     svg.appendChild(createRect(0, C.y.beam, w, 12, C.colors.beam, {color: C.colors.beamBorder, width: 1}));
 
-    // 棒と点
     for(let i=0; i < this.digits; i++) {
       const cx = (i * C.widthPerDigit) + (C.widthPerDigit / 2);
-      // 棒
       const rod = createRect(cx - 3, 10, 6, h - 20, C.colors.rod);
-      // 梁より奥に挿入（梁の次にある要素の前に挿入...は面倒なので梁のrect取得ロジック省略で後ろに追加後、z-index概念ないため順序重要）
-      // ここでは簡易的に「梁の後ろ(append)」だと手前に描画されるため、
-      // 梁(3番目の子要素)の前に挿入する
       svg.insertBefore(rod, svg.children[2]); 
 
-      // 点（一の位と千の位）
-      // 右から0番目(index = digits-1) = 1の位
-      // 右から3番目(index = digits-4) = 1000の位
       const onePlaceIdx = this.digits - 1;
       const thousandPlaceIdx = this.digits - 4;
       
@@ -183,52 +167,36 @@ class SorobanEngine {
     img.setAttribute("width", C.bead.width);
     img.setAttribute("height", C.bead.height);
     img.setAttribute("id", id);
-    img.style.transition = "y 0.1s ease-out"; // アニメーション
+    img.style.transition = "y 0.1s ease-out";
     return img;
   }
 
-  // 玉がクリックされた時の処理
   handleBeadClick(col, type, row) {
-    // 現在のその桁の値を取得
     const currentDigitVal = this.getDigitValue(this.currentValue, col);
     let newDigitVal = currentDigitVal;
 
     if (type === 'upper') {
-      // 五玉：0なら5に、5以上なら0(あるいは5引く)にする
       if (currentDigitVal >= 5) newDigitVal -= 5;
       else newDigitVal += 5;
     } else {
-      // 一玉：クリックされた位置(row 0-3)と現在の1玉の値(0-4)を比較
       const currentOnes = currentDigitVal % 5;
-      const clickedPos = row; // 上から0,1,2,3番目
-
-      // ロジック：
-      // クリックした玉が「ON（上がってる）」なら、その玉を「OFF（下げる）」= 値は clickedPos になる
-      // クリックした玉が「OFF（下がってる）」なら、その玉を「ON（上げる）」 = 値は clickedPos + 1 になる
+      const clickedPos = row; 
       
       if (clickedPos < currentOnes) {
-        // ONの玉を触った -> 下げる
         newDigitVal = (currentDigitVal - currentOnes) + clickedPos;
       } else {
-        // OFFの玉を触った -> 上げる
         newDigitVal = (currentDigitVal - currentOnes) + (clickedPos + 1);
       }
     }
-
-    // 全体の値を更新
     this.updateDigitValue(col, newDigitVal);
   }
 
-  // 指定した桁の値を更新して全体値を再計算
   updateDigitValue(col, newDigitVal) {
     const strVal = this.currentValue.toString().padStart(this.digits, '0');
     const chars = strVal.split('');
     chars[col] = newDigitVal.toString();
     const newValue = parseInt(chars.join(''), 10);
-    
     this.setValue(newValue);
-    
-    // 外部へ通知（数字表示の更新など）
     if (this.onChange) this.onChange(newValue);
   }
 
@@ -237,30 +205,23 @@ class SorobanEngine {
     return parseInt(str[col], 10);
   }
 
-  // 値をセットして描画更新
   setValue(value) {
-    // 最大桁数を超えないように制限
     const maxVal = Math.pow(10, this.digits) - 1;
     this.currentValue = Math.min(Math.max(0, value), maxVal);
     this.render();
   }
 
-  // 現在の値に基づいて玉の位置を更新
   render() {
     const C = this.config;
     const strVal = this.currentValue.toString().padStart(this.digits, "0");
 
     for (let col = 0; col < this.digits; col++) {
       const digit = parseInt(strVal[col], 10);
-
-      // --- 五玉更新 ---
       const upperBead = document.getElementById(`upper-${col}`);
       if (upperBead) {
         const isUpperActive = digit >= 5;
         upperBead.setAttribute("y", isUpperActive ? C.y.upperActive : C.y.upperRest);
       }
-
-      // --- 一玉更新 ---
       const ones = digit % 5;
       for (let row = 0; row < 4; row++) {
         const lowerBead = document.getElementById(`lower-${col}-${row}`);
@@ -268,10 +229,8 @@ class SorobanEngine {
           const isLowerActive = row < ones;
           let targetY;
           if (isLowerActive) {
-            // 上がっている
             targetY = (C.y.lowerBase + (row * C.y.lowerGap)) + C.y.lowerActiveOffset;
           } else {
-            // 下がっている
             targetY = C.y.lowerBase + (row * C.y.lowerGap);
           }
           lowerBead.setAttribute("y", targetY);
@@ -281,11 +240,10 @@ class SorobanEngine {
   }
 }
 
-// --- メイン処理 ---
 const CONFIG = {
   digits: 5,
   widthPerDigit: 60,
-  height: 225, // 調整済みの高さ
+  height: 225, 
   colors: {
     frame: "#231815", rod: "#deb887", beam: "#e6e6e6", 
     beamBorder: "#231815", dot: "#000000"
@@ -297,21 +255,14 @@ const CONFIG = {
   }
 };
 
-let soroban; // エンジンインスタンス
+let soroban; 
 
 document.addEventListener('DOMContentLoaded', () => {
-  // そろばんエンジンの起動
   soroban = new SorobanEngine('abacus-display-container', CONFIG, (newValue) => {
-    // 玉を動かした時に呼ばれる: 数字表示を更新
     updateNumberDisplay(newValue);
   });
-
-  // 初期値セット
   soroban.setValue(0);
 
-  // --- ボタンイベント設定 ---
-  
-  // テンキー & 制御ボタン
   document.body.addEventListener('click', (event) => {
     const button = event.target.closest('button');
     if (!button) return;
@@ -334,7 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNumberDisplay(soroban.currentValue);
   });
 
-  // 上下スクロールボタン（長押し対応）
   setupScrollButton('scroll-up', () => {
     soroban.setValue(soroban.currentValue + 1);
     updateNumberDisplay(soroban.currentValue);
@@ -345,13 +295,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// 数字表示の更新
 function updateNumberDisplay(val) {
   const el = document.getElementById('answer-display');
   if (el) el.textContent = val.toString();
 }
 
-// 連続クリック用ヘルパー
 function setupScrollButton(id, action) {
   const btn = document.getElementById(id);
   if (!btn) return;
@@ -379,9 +327,8 @@ function setupScrollButton(id, action) {
   /* 共通設定 */
   .test-screen {
     width: 100%;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
+    /* PCでのスクロール防止のためheight指定は最小限に */
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
@@ -447,7 +394,7 @@ function setupScrollButton(id, action) {
   }
 
   .abacus-area {
-    flex: 1 1 50%;
+    flex: 1;
     position: relative;
     display: flex;
     justify-content: center;
@@ -458,6 +405,7 @@ function setupScrollButton(id, action) {
   .abacus-wrapper {
     width: 100%;
     height: 100%;
+    /* スマホでの最大幅 */
     max-width: 500px;
     display: flex; justify-content: center; align-items: center;
   }
@@ -474,13 +422,12 @@ function setupScrollButton(id, action) {
     max-width: 100%;
     max-height: 100%;
     display: block;
-    /* タッチ操作禁止を解除（ポインターイベント有効化） */
     pointer-events: auto; 
   }
 
   /* 下半分：操作エリア */
   .keypad-area {
-    flex: 1 1 50%;
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -550,7 +497,6 @@ function setupScrollButton(id, action) {
     font-weight: bold;
     color: #4b3b30;
     touch-action: manipulation;
-    font-family: 'SorobanFont', sans-serif !important;
   }
   .key-btn:active {
     transform: translateY(2px);
@@ -558,27 +504,46 @@ function setupScrollButton(id, action) {
     background: #f3e1d2;
   }
 
+  /* --- ★PC対応：ここが修正ポイント --- */
   @media (min-width: 768px) {
     .main-area {
-      flex-direction: row;
-      align-items: center;
-      gap: 20px;
-    }
-    .abacus-area, .keypad-area {
-      flex: 1 1 50%;
-      height: 500px;
-    }
-    .game-panel {
-      max-width: 900px;
+      flex-direction: row; /* 横並び */
+      align-items: center; /* 縦中央 */
+      gap: 30px;
+      max-width: 1100px;
       margin: 0 auto;
-      height: auto;
-      border-radius: 16px;
       padding: 20px;
     }
-    .test-screen {
+    
+    .game-panel {
+      max-width: none;
+      height: 100vh;
+      border-radius: 0;
+      padding: 0;
+    }
+
+    /* そろばん：大きく */
+    .abacus-area {
+      flex: 2; /* 2の比率 */
       height: auto;
-      min-height: 100vh;
-      overflow: visible;
+      max-width: none;
+    }
+    
+    /* ラッパー：PCサイズ制限を緩和 */
+    .abacus-wrapper {
+      max-width: 800px; 
+    }
+
+    /* テンキー：固定幅 */
+    .keypad-area {
+      flex: 1; /* 1の比率 */
+      max-width: 360px; /* 固定 */
+      height: 550px;
+      margin: 0;
+    }
+    
+    .test-screen {
+      overflow: hidden; /* PCではスクロールさせない */
     }
   }
 </style>
