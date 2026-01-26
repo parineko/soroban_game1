@@ -1,13 +1,13 @@
 /**
  * gameController.js
- * 最強そろばんエンジン搭載版（5桁・SVG描画・カスタム設定対応）
+ * 最強そろばんエンジン搭載版（スクロールズレ修正済み）
  */
 import { RESULT_MESSAGES } from './levelConfig.js';
 
-/* --- ★TestZeroで完成させたデザイン設定 --- */
+/* --- デザイン設定 --- */
 const DESIGN_CONFIG = {
   widthPerDigit: 60,
-  height: 225, // 調整済みの高さ
+  height: 225, 
   
   colors: {
     frame: "#231815",
@@ -45,7 +45,6 @@ function validateDigit(num) {
 
 export class GameController {
   constructor() {
-    // 現在のゲーム設定
     this.gameSettings = {
       digits: 3,
       time: 2000,
@@ -61,7 +60,7 @@ export class GameController {
     this.isNextState = false; 
     
     // DOM要素
-    this.levelLabel = getElementSafely("level-label"); // ここに設定を表示
+    this.levelLabel = getElementSafely("level-label");
     this.questionCounter = getElementSafely("question-counter");
     this.answerDisplay = getElementSafely("answer-display");
     this.resultSummary = getElementSafely("result-summary");
@@ -71,8 +70,7 @@ export class GameController {
     this.enterButton = getElementSafely("enter-btn");
     this.instructionText = getElementSafely("instruction-text");
     
-    // SVG設定
-    this.SVG_WIDTH = 0; // startLevelで計算
+    this.SVG_WIDTH = 0;
     this.SVG_HEIGHT = DESIGN_CONFIG.height;
 
     this.init();
@@ -95,7 +93,6 @@ export class GameController {
         return;
       }
 
-      // レベル選択画面のスタートボタン
       if (button.id === "custom-start-btn") {
         event.preventDefault();
         this.startFromMenu();
@@ -113,6 +110,7 @@ export class GameController {
     });
   }
 
+  // ★修正ポイント：画面切り替え時にスクロール位置をリセット
   showScreen(screenName) {
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {
@@ -121,7 +119,11 @@ export class GameController {
     
     const targetScreen = document.querySelector(`[data-screen="${screenName}"]`);
     if (targetScreen) {
-      targetScreen.style.display = 'flex'; // 中央寄せのためにflex推奨（CSS依存）
+      targetScreen.style.display = 'flex';
+      
+      // ★ここを追加！画面の一番上に戻す
+      window.scrollTo(0, 0);
+
       if (screenName === 'game') {
         document.body.classList.add('game-screen-active');
       } else {
@@ -141,7 +143,6 @@ export class GameController {
     }
   }
 
-  // メニュー画面の値を取得してスタート
   startFromMenu() {
     const digitsSelect = document.getElementById("custom-digits");
     const timeSelect = document.getElementById("custom-time");
@@ -210,7 +211,6 @@ export class GameController {
     }
   }
 
-  // ゲーム開始（引数で設定を受け取る）
   startLevel(digits, timeMs) {
     this.gameSettings = {
       digits: digits,
@@ -218,17 +218,11 @@ export class GameController {
       questions: 10
     };
 
-    // SVG幅の再計算
-    // 本編では「表示桁数＝問題の桁数」とするのが自然ですが、
-    // 見た目を良くするために最低でも3桁分くらいの幅は確保しても良いかも。
-    // 今回はシンプルに「5桁固定表示」で、問題の桁数だけ変える方式を採用します。
-    // （TestZeroで作った5桁そろばんが綺麗だったので）
     this.displayDigits = 5; 
     this.SVG_WIDTH = this.displayDigits * DESIGN_CONFIG.widthPerDigit;
     
     this.reset();
 
-    // ステータスラベルの更新（例：3けた ・ 2.0びょう）
     if (this.levelLabel) {
       const timeSec = (timeMs / 1000).toFixed(1);
       this.levelLabel.textContent = `${digits}けた ・ ${timeSec}びょう`;
@@ -243,8 +237,6 @@ export class GameController {
        this.abacusDisplayContainer.innerHTML = '';
        this.abacusDisplayContainer.style.display = "flex";
        this.abacusDisplayContainer.style.height = "100%";
-       
-       // 空のそろばん（枠のみ）を描画
        this.drawAbacusBackground();
     }
     if(this.abacusArea) {
@@ -309,12 +301,10 @@ export class GameController {
     }
     
     if (this.abacusDisplayContainer) {
-      // 5桁の枠の中に、問題の数字を描画
       this.createAbacusDisplay(this.currentAnswer, this.displayDigits);
       
       const svg = this.abacusDisplayContainer.querySelector('svg');
       if (svg) {
-        // 玉をフェードイン
         const beads = svg.querySelectorAll('image');
         beads.forEach(bead => {
              bead.style.transition = "opacity 0.2s ease";
@@ -327,7 +317,6 @@ export class GameController {
       if (this.abacusDisplayContainer) {
         const svg = this.abacusDisplayContainer.querySelector('svg');
         if (svg) {
-            // 時間切れで玉を隠す
             const beads = svg.querySelectorAll('image');
             beads.forEach(bead => bead.style.opacity = "0");
         }
@@ -382,7 +371,6 @@ export class GameController {
     
     const validatedDigit = validateDigit(key);
     if (validatedDigit === null) return;
-    // 入力桁数制限（設定桁数 + 1くらい余裕を持たせる）
     if (this.answerText.length >= this.gameSettings.digits + 1) return;
 
     if (this.answerText === "0") this.answerText = validatedDigit.toString();
@@ -471,7 +459,6 @@ export class GameController {
     }
     
     if (this.abacusDisplayContainer) {
-      // 答え合わせの時に玉を再表示
       const svg = this.abacusDisplayContainer.querySelector('svg');
       if (svg) {
          const beads = svg.querySelectorAll('image');
@@ -501,8 +488,6 @@ export class GameController {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  // --- SVG生成関連 (TestZeroからの移植) ---
-
   drawAbacusBackground() {
     if (!this.abacusDisplayContainer) return;
     this.abacusDisplayContainer.innerHTML = '';
@@ -516,7 +501,6 @@ export class GameController {
     svg.style.width = "100%";
     svg.style.height = "100%";
 
-    // 外枠
     const createFrame = (y) => {
         const r = document.createElementNS(ns, "rect");
         r.setAttribute("x", 0); r.setAttribute("y", y);
@@ -527,7 +511,6 @@ export class GameController {
     svg.appendChild(createFrame(0));
     svg.appendChild(createFrame(this.SVG_HEIGHT - 10));
 
-    // 梁
     const beam = document.createElementNS(ns, "rect");
     beam.setAttribute("x", 0); beam.setAttribute("y", C.y.beam);
     beam.setAttribute("width", this.SVG_WIDTH); beam.setAttribute("height", 12);
@@ -536,7 +519,6 @@ export class GameController {
     beam.setAttribute("stroke-width", "1");
     svg.appendChild(beam);
 
-    // 棒と点
     for(let i=0; i<this.displayDigits; i++) {
         const cx = (i * C.widthPerDigit) + (C.widthPerDigit / 2);
         
@@ -549,7 +531,6 @@ export class GameController {
         
         svg.insertBefore(rod, beam);
 
-        // 点（一の位と千の位）
         const onePlaceIdx = this.displayDigits - 1;
         const thousandPlaceIdx = this.displayDigits - 4;
         
@@ -580,7 +561,6 @@ export class GameController {
       
       const digit = this.getDigit(value, digits, col);
 
-      // 五玉
       const isUpperActive = digit >= 5;
       const upperY = isUpperActive ? C.y.upperActive : C.y.upperRest;
       
@@ -592,7 +572,6 @@ export class GameController {
       upperBead.setAttribute("height", C.bead.height);
       svg.appendChild(upperBead);
 
-      // 一玉
       const remainder = digit % 5;
       for (let row = 0; row < 4; row++) {
         const isLowerActive = row < remainder;
