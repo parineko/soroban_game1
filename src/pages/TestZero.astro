@@ -1,6 +1,6 @@
 ---
 // TestZero.astro
-// PCレイアウト最適化版
+// スマホのタブ被り修正 & PCレイアウト維持版
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
@@ -68,9 +68,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 </div>
 
 <script>
-  // ...（前のコードと同じ）...
-  // 念のためSorobanEngineクラスなどはそのまま残しておいてください
-  /**
+/**
  * SorobanEngine
  * そろばんの描画・操作・状態管理を行うコアクラス
  */
@@ -324,11 +322,13 @@ function setupScrollButton(id, action) {
 </script>
 
 <style>
-  /* 共通設定 */
+  /* 共通設定：スマホ（デフォルト） */
   .test-screen {
     width: 100%;
-    /* PCでのスクロール防止のためheight指定は最小限に */
-    min-height: 100vh;
+    /* ★修正: 100vhだとスマホのバーに隠れるので、dvh(Dynamic Viewport Height)を使用 */
+    height: 100vh;
+    height: 100dvh; 
+    overflow: hidden; /* はみ出し防止 */
     display: flex;
     flex-direction: column;
   }
@@ -336,9 +336,13 @@ function setupScrollButton(id, action) {
   .game-panel {
     flex: 1;
     padding: 10px;
+    /* ★修正: 下部のバー対策で余白を確保 */
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
     background: #faf8f5;
+    height: 100%; /* 親に合わせる */
+    box-sizing: border-box;
   }
 
   .game-header {
@@ -377,7 +381,7 @@ function setupScrollButton(id, action) {
     display: flex;
     flex-direction: column;
     flex: 1;
-    gap: 10px;
+    gap: 5px; /* 隙間を少し詰める */
     overflow: hidden;
   }
 
@@ -390,14 +394,16 @@ function setupScrollButton(id, action) {
     display: flex;
     flex-direction: column;
     flex: 1;
-    gap: 10px;
+    gap: 5px;
+    min-height: 0; /* 重要：Flex内ではみ出し防止 */
   }
 
   .abacus-area {
-    flex: 1;
+    flex: 1; /* 余ったスペースを占有 */
     position: relative;
     display: flex;
     justify-content: center;
+    align-items: center; /* 上下中央 */
     width: 100%;
     min-height: 0;
   }
@@ -405,7 +411,6 @@ function setupScrollButton(id, action) {
   .abacus-wrapper {
     width: 100%;
     height: 100%;
-    /* スマホでの最大幅 */
     max-width: 500px;
     display: flex; justify-content: center; align-items: center;
   }
@@ -427,14 +432,11 @@ function setupScrollButton(id, action) {
 
   /* 下半分：操作エリア */
   .keypad-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
-    min-height: 0;
+    display: flex; flex-direction: column; gap: 6px; min-height: 0;
+    flex-shrink: 0; /* 縮ませない */
   }
 
   .answer-area {
@@ -504,46 +506,57 @@ function setupScrollButton(id, action) {
     background: #f3e1d2;
   }
 
-  /* --- ★PC対応：ここが修正ポイント --- */
+  /* --- ★PC対応（前回修正した設定を維持） --- */
   @media (min-width: 768px) {
     .main-area {
-      flex-direction: row; /* 横並び */
-      align-items: center; /* 縦中央 */
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
       gap: 30px;
-      max-width: 1100px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
     }
     
     .game-panel {
-      max-width: none;
+      padding: 20px;
       height: 100vh;
       border-radius: 0;
-      padding: 0;
+      justify-content: center;
     }
 
-    /* そろばん：大きく */
+    /* そろばん：大きく（サイズ制限あり） */
     .abacus-area {
-      flex: 2; /* 2の比率 */
+      flex: 1.5;
       height: auto;
-      max-width: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end; 
     }
     
-    /* ラッパー：PCサイズ制限を緩和 */
     .abacus-wrapper {
-      max-width: 800px; 
+      width: 100%;
+      max-width: 600px; /* PCでの最大幅 */
+      aspect-ratio: auto;
     }
 
     /* テンキー：固定幅 */
     .keypad-area {
-      flex: 1; /* 1の比率 */
-      max-width: 360px; /* 固定 */
-      height: 550px;
+      flex: 1;
+      width: 340px; 
+      max-width: 340px;
+      height: auto;
       margin: 0;
+      justify-content: flex-start;
+    }
+    
+    .keypad-row, .answer-area {
+      height: 60px;
+      flex: none;
     }
     
     .test-screen {
-      overflow: hidden; /* PCではスクロールさせない */
+      overflow: hidden;
     }
   }
 </style>

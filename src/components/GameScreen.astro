@@ -1,6 +1,6 @@
 ---
 // GameScreen.astro
-// PCレイアウト最適化版（テンキー幅固定・そろばん拡大）
+// PCレイアウト修正版（テンキーの縦長化防止・サイズ最適化）
 ---
 
 <div class="screen game-screen" data-screen="game" style="display: none;">
@@ -109,7 +109,7 @@
   }
 
   .abacus-area {
-    flex: 1; /* 余ったスペースを使う */
+    flex: 1;
     width: 100%;
     position: relative; 
     display: flex; justify-content: center; align-items: center;
@@ -118,10 +118,10 @@
 
   .abacus-wrapper {
     width: 100%;
-    /* 縦横比を維持しつつ最大化 */
+    /* 縦横比を維持 */
     aspect-ratio: 100 / 85; 
     max-height: 100%;
-    max-width: 500px; /* スマホでは広がりすぎないように */
+    max-width: 500px;
     display: flex; justify-content: center; align-items: center;
   }
 
@@ -136,12 +136,11 @@
 
   /* テンキーエリア */
   .keypad-area {
-    /* スマホでは下部に配置、高さは内容なり */
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
     display: flex; flex-direction: column; gap: 8px; min-height: 0;
-    flex-shrink: 0; /* 縮ませない */
+    flex-shrink: 0;
   }
 
   .instruction-container {
@@ -210,44 +209,60 @@
     background: #63c27b !important; border-bottom-color: #4da864 !important;
   }
 
-  /* --- ★PC対応（横長画面）のレイアウト修正 --- */
+  /* --- ★PC対応（ここを修正！） --- */
   @media (min-width: 768px) {
     .layout-wrapper {
       flex-direction: row; /* 横並び */
       align-items: center; /* 縦中央揃え */
-      gap: 30px;
-      max-width: 1100px;
+      gap: 40px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 0 40px;
     }
     
     .game-panel {
       padding: 20px; 
-      height: auto; 
-      min-height: 100vh; /* 画面いっぱいに */
+      height: 100vh;
       border-radius: 0;
+      justify-content: center;
     }
 
-    /* そろばんエリア：残りの幅いっぱい使う */
+    /* そろばんエリア：残りのスペースで最大化 */
     .abacus-area {
-      flex: 2; /* 2の比率で広く */
-      height: auto;
-      aspect-ratio: auto; /* 比率はラッパー任せ */
-      max-width: none; /* 制限解除 */
+      flex: 1;
+      height: 80vh; /* 高さ確保 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
-    /* そろばんラッパー：PCでは少し大きく表示可能に */
     .abacus-wrapper {
-      max-width: 700px;
-      margin: 0 auto;
+      width: 100%;
+      max-width: 800px; /* PCでは大きく */
+      aspect-ratio: auto; /* 比率はSVGに任せる */
     }
 
-    /* テンキーエリア：幅を固定して巨大化を防ぐ */
+    /* テンキーエリア：幅と高さを「スマホサイズ」に固定 */
     .keypad-area {
-      flex: 1; /* 1の比率 */
-      max-width: 360px; /* ★ここで幅制限！スマホサイズ感を維持 */
-      height: 550px; /* 高さは確保 */
-      margin: 0; /* 中央寄せ解除（Flexで制御） */
+      width: 340px; /* 固定幅 */
+      height: auto; /* 中身に合わせる */
+      flex: none;   /* 伸び縮みさせない */
+      margin: 0;
+    }
+
+    /* ボタンが縦に伸びないように高さを固定 */
+    .keypad-row {
+      height: 60px; /* ちょうどいい高さ */
+      flex: none;
+    }
+    
+    .answer-row {
+      height: 60px;
+      flex: none;
+    }
+    
+    .instruction-container {
+      margin-bottom: 10px;
     }
   }
 </style>
