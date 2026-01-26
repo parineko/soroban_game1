@@ -1,0 +1,505 @@
+---
+// KukuGame.astro
+// ロジック修正版：間違えたらスキップして最後に再出題
+---
+
+<div class="screen kuku-game-screen" data-screen="kuku-game" style="display: none;">
+  <div class="panel kuku-panel">
+    
+    <div class="kuku-header">
+      <div class="dan-badge">
+        <span id="game-dan-title">2 のだん</span>
+      </div>
+      <button class="btn-back-mini" data-action="back-kuku-select">もどる 🏠</button>
+    </div>
+
+    <div class="kuku-content">
+      
+      <div class="kuku-table-area">
+        <div id="game-col-left" class="kuku-col"></div>
+        <div id="game-col-right" class="kuku-col"></div>
+      </div>
+
+      <div class="kuku-question-box">
+        <p id="game-reading-text" class="reading-text">もんだい を つくるよ...</p>
+      </div>
+
+      <div class="kuku-abacus-area">
+        <div class="abacus-wrapper">
+          <div id="game-abacus-container"></div>
+        </div>
+      </div>
+
+      <div class="kuku-controls-dual">
+        <button class="control-btn reset-btn" id="game-reset">
+          <span class="icon">🔄</span> ゼロ
+        </button>
+        <button class="control-btn answer-btn" id="game-answer">
+          こたえる ⭕
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  /* --- ベーススタイル（KukuScreenと共通） --- */
+  :global(body.kuku-game-active .app-header) { display: none !important; }
+
+  .kuku-game-screen {
+    width: 100%; height: 100dvh;
+    display: flex; justify-content: center;
+    background-color: #fff0f5; /* テストモードは少しピンク背景 */
+    overflow: hidden;
+  }
+
+  .kuku-panel {
+    width: 100%; max-width: 600px; height: 100%;
+    display: flex; flex-direction: column;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-left: 10px; padding-right: 10px;
+    box-sizing: border-box; background: #fff;
+  }
+
+  .kuku-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5px; flex-shrink: 0; height: 50px;
+  }
+
+  .dan-badge {
+    background: #ff4081; /* 濃いピンク */
+    padding: 8px 20px; border-radius: 30px;
+    color: white; font-size: 1.5rem; font-weight: bold;
+    font-family: 'SorobanFont', sans-serif !important;
+    box-shadow: 0 2px 0 #c51162;
+  }
+
+  .btn-back-mini {
+    background: #8b7e71; color: #fff; border: none;
+    border-radius: 12px; padding: 8px 16px;
+    font-size: 1.1rem; font-weight: bold; cursor: pointer;
+  }
+
+  .kuku-content {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; gap: 5px;
+  }
+
+  /* 表エリア */
+  .kuku-table-area {
+    display: flex; gap: 15px; padding: 10px;
+    background: #fff0f5; border-radius: 16px;
+    border: 3px solid #ffcdd2;
+    flex-shrink: 0; flex-grow: 0;
+  }
+  .kuku-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+  /* 問題行スタイル */
+  :global(.game-row) {
+    font-size: 1.4rem; color: #aaa; padding: 6px 0;
+    text-align: center; background: #fff; border-radius: 8px;
+    font-family: 'SorobanFont', sans-serif !important;
+    line-height: 1.2;
+  }
+  /* 現在の問題 */
+  :global(.game-row.current) {
+    background-color: #ffff8d; border: 2px solid #ffea00;
+    color: #000; transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    font-weight: bold;
+  }
+  /* 正解済み */
+  :global(.game-row.solved) {
+    color: #d81b60; font-weight: bold;
+    background-color: #f8bbd0;
+  }
+
+  /* 問題文 */
+  .kuku-question-box {
+    text-align: center; padding: 5px;
+    flex-shrink: 0; min-height: 50px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .reading-text {
+    font-size: 2.2rem; color: #c51162; margin: 0; font-weight: bold;
+  }
+
+  /* そろばん */
+  .kuku-abacus-area {
+    flex: 1; width: 100%;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 0; padding: 10px 0;
+  }
+  .abacus-wrapper {
+    width: 100%; height: 100%; max-width: 600px;
+    display: flex; justify-content: center; align-items: center;
+  }
+  #game-abacus-container {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  :global(#game-abacus-container svg) {
+    width: 100%; height: 100%; display: block;
+    max-height: 100%; max-width: 100%;
+  }
+
+  /* ★ボタンエリア */
+  .kuku-controls-dual {
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; 
+    flex-shrink: 0;
+    padding: 0 10px;
+  }
+
+  .control-btn {
+    border: none; border-radius: 20px;
+    font-weight: bold; font-size: 1.2rem;
+    cursor: pointer; height: 60px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    transition: transform 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .control-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 rgba(0,0,0,0.2);
+  }
+
+  .reset-btn {
+    flex: 1; 
+    background: #fff176; color: #5d4037;
+    border-bottom: 4px solid #fbc02d;
+    max-width: 120px;
+  }
+
+  .answer-btn {
+    flex: 2; 
+    background: linear-gradient(135deg, #ff80ab, #ff4081);
+    color: white;
+    border-bottom: 4px solid #c51162;
+    font-size: 1.5rem; 
+  }
+
+  @media (min-width: 768px) {
+    .kuku-panel {
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      margin-top: 20px; height: 95vh;
+    }
+  }
+</style>
+
+<script>
+  import { KUKU_DATA } from '../scripts/kukuData.js';
+
+  // そろばん設定
+  const GAME_DESIGN_CONFIG = {
+    widthPerDigit: 60, height: 225, 
+    colors: { frame: "#231815", rod: "#deb887", beam: "#e6e6e6", beamBorder: "#231815", dot: "#000000" },
+    bead: { width: 60, height: 32, imgSrc: "/images/tama.png" },
+    y: { upperRest: 10, upperActive: 28, beam: 60, lowerBase: 91, lowerGap: 31, lowerActiveOffset: -19 }
+  };
+
+  let currentDan = 2;
+  let remainingQuestions = []; // 未正解の問題インデックスリスト
+  let currentQIndex = -1;      // 現在出題中の問題インデックス(0-8)
+  let solvedStatus = [];       // 正解済みフラグ
+  let sorobanGame;
+
+  // --- そろばんエンジン ---
+  class SorobanEngineGame {
+    constructor(containerId, config) {
+      this.container = document.getElementById(containerId);
+      this.config = config;
+      this.currentValue = 0;
+      this.digits = 3; 
+      if (this.container) this.init();
+    }
+    init() {
+      this.container.innerHTML = '';
+      const C = this.config;
+      const totalWidth = this.digits * C.widthPerDigit;
+      const totalHeight = C.height;
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
+      svg.style.width = "100%"; svg.style.height = "100%";
+      this.drawBackground(svg, ns, totalWidth, totalHeight);
+      for (let col = 0; col < this.digits; col++) {
+        const cx = (col * C.widthPerDigit) + (C.widthPerDigit / 2);
+        const beadX = cx - (C.bead.width / 2);
+        const upperBead = this.createBead(ns, beadX, C.y.upperRest, `kg-upper-${col}`);
+        upperBead.style.cursor = "pointer";
+        upperBead.addEventListener('click', () => this.handleBeadClick(col, 'upper', 0));
+        svg.appendChild(upperBead);
+        for (let row = 0; row < 4; row++) {
+          const lowerY = C.y.lowerBase + (row * C.y.lowerGap);
+          const lowerBead = this.createBead(ns, beadX, lowerY, `kg-lower-${col}-${row}`);
+          lowerBead.style.cursor = "pointer";
+          lowerBead.addEventListener('click', () => this.handleBeadClick(col, 'lower', row));
+          svg.appendChild(lowerBead);
+        }
+      }
+      this.container.appendChild(svg);
+    }
+    drawBackground(svg, ns, w, h) {
+      const C = this.config;
+      const createRect = (x, y, w, h, f, s) => {
+        const r = document.createElementNS(ns, "rect");
+        r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", w); r.setAttribute("height", h); r.setAttribute("fill", f);
+        if(s) { r.setAttribute("stroke", s.color); r.setAttribute("stroke-width", s.width); }
+        return r;
+      };
+      svg.appendChild(createRect(0, 0, w, 10, C.colors.frame));
+      svg.appendChild(createRect(0, h-10, w, 10, C.colors.frame));
+      svg.appendChild(createRect(0, C.y.beam, w, 12, C.colors.beam, {color: C.colors.beamBorder, width: 1}));
+      for(let i=0; i<this.digits; i++) {
+        const cx = (i * C.widthPerDigit) + (C.widthPerDigit / 2);
+        const rod = createRect(cx-3, 10, 6, h-20, C.colors.rod);
+        svg.insertBefore(rod, svg.children[2]);
+        if(i === this.digits - 1) {
+           const dot = document.createElementNS(ns, "circle");
+           dot.setAttribute("cx", cx); dot.setAttribute("cy", C.y.beam + 6); dot.setAttribute("r", 3); dot.setAttribute("fill", C.colors.dot);
+           svg.appendChild(dot);
+        }
+      }
+    }
+    createBead(ns, x, y, id) {
+      const C = this.config;
+      const img = document.createElementNS(ns, "image");
+      img.setAttribute("href", C.bead.imgSrc);
+      img.setAttribute("x", x); img.setAttribute("y", y); img.setAttribute("width", C.bead.width); img.setAttribute("height", C.bead.height);
+      img.setAttribute("id", id);
+      img.style.transition = "y 0.1s ease-out";
+      return img;
+    }
+    handleBeadClick(col, type, row) {
+      const currentDigitVal = this.getDigitValue(this.currentValue, col);
+      let newDigitVal = currentDigitVal;
+      if (type === 'upper') { if (currentDigitVal >= 5) newDigitVal -= 5; else newDigitVal += 5; } else {
+        const currentOnes = currentDigitVal % 5;
+        const clickedPos = row;
+        if (clickedPos < currentOnes) newDigitVal = (currentDigitVal - currentOnes) + clickedPos; else newDigitVal = (currentDigitVal - currentOnes) + (clickedPos + 1);
+      }
+      this.updateDigitValue(col, newDigitVal);
+    }
+    updateDigitValue(col, newDigitVal) {
+      const strVal = this.currentValue.toString().padStart(this.digits, '0');
+      const chars = strVal.split('');
+      chars[col] = newDigitVal.toString();
+      const newValue = parseInt(chars.join(''), 10);
+      this.setValue(newValue);
+    }
+    getDigitValue(val, col) {
+      const str = val.toString().padStart(this.digits, "0");
+      return parseInt(str[col], 10);
+    }
+    setValue(value) { 
+        this.currentValue = value; 
+        this.render(); 
+    }
+    render() {
+      const C = this.config;
+      const strVal = this.currentValue.toString().padStart(this.digits, "0");
+      for (let col = 0; col < this.digits; col++) {
+        const digit = parseInt(strVal[col], 10);
+        const upperBead = document.getElementById(`kg-upper-${col}`);
+        if (upperBead) { const isUpperActive = digit >= 5; upperBead.setAttribute("y", isUpperActive ? C.y.upperActive : C.y.upperRest); }
+        const ones = digit % 5;
+        for (let row = 0; row < 4; row++) {
+          const lowerBead = document.getElementById(`kg-lower-${col}-${row}`);
+          if (lowerBead) { const isLowerActive = row < ones; let targetY = isLowerActive ? (C.y.lowerBase + (row * C.y.lowerGap)) + C.y.lowerActiveOffset : C.y.lowerBase + (row * C.y.lowerGap); lowerBead.setAttribute("y", targetY); }
+        }
+      }
+    }
+  }
+
+  // --- ゲームロジック ---
+  function initGame(dan) {
+    currentDan = dan;
+    // 未正解リストを作成 (0〜8)
+    remainingQuestions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    // シャッフルする（ランダム出題）
+    shuffleArray(remainingQuestions);
+    
+    // 正解状況リセット
+    solvedStatus = new Array(9).fill(false);
+    
+    if (!sorobanGame) {
+      sorobanGame = new SorobanEngineGame('game-abacus-container', GAME_DESIGN_CONFIG);
+    }
+    sorobanGame.setValue(0);
+    
+    nextQuestion();
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  function nextQuestion() {
+    renderTable();
+    
+    if (remainingQuestions.length === 0) {
+      document.getElementById('game-reading-text').textContent = "すごい！ ぜんぶ クリア！ 💮";
+      playSound('fanfare');
+      return;
+    }
+
+    // 次の問題
+    currentQIndex = remainingQuestions[0]; 
+    const questions = KUKU_DATA[currentDan];
+    const q = questions[currentQIndex];
+    
+    document.getElementById('game-reading-text').textContent = `${q.read} ？`;
+    
+    // 現在の問題を目立たせる（再描画）
+    renderTable(); 
+    
+    sorobanGame.setValue(0);
+  }
+
+  function renderTable() {
+    document.getElementById('game-dan-title').textContent = `${currentDan} のだん`;
+    
+    const leftCol = document.getElementById('game-col-left');
+    const rightCol = document.getElementById('game-col-right');
+    leftCol.innerHTML = ''; rightCol.innerHTML = '';
+    
+    const questions = KUKU_DATA[currentDan];
+    
+    questions.forEach((item, index) => {
+      const div = document.createElement('div');
+      
+      let text = "";
+      let className = "game-row";
+      
+      if (solvedStatus[index]) {
+        // 正解済み
+        text = `${item.q} ${item.a}`;
+        className += " solved";
+      } else {
+        // 未正解
+        text = `${item.q} ？`;
+        if (index === currentQIndex) {
+            className += " current"; // 今の問題
+        }
+      }
+      
+      div.className = className;
+      div.textContent = text;
+      
+      if (index < 5) leftCol.appendChild(div);
+      else rightCol.appendChild(div);
+    });
+  }
+
+  function checkAnswer() {
+    if (remainingQuestions.length === 0) return;
+
+    const questions = KUKU_DATA[currentDan];
+    const targetQ = questions[currentQIndex];
+    const userVal = sorobanGame.currentValue;
+
+    if (userVal === targetQ.a) {
+      // 正解！
+      playSound('correct');
+      solvedStatus[currentQIndex] = true;
+      remainingQuestions.shift(); // 削除
+      
+      setTimeout(() => {
+        nextQuestion();
+      }, 500); // すぐ次へ（テンポアップ）
+    } else {
+      // ★修正：不正解でもスキップする！
+      playSound('wrong'); 
+      
+      // アニメーション（揺らす）
+      const box = document.querySelector('.kuku-question-box');
+      box.style.transform = "translateX(10px)";
+      setTimeout(() => box.style.transform = "translateX(-10px)", 50);
+      setTimeout(() => box.style.transform = "none", 100);
+
+      // ★ここが変更点：
+      // 間違えた問題をリストの「最後」に回して、強制的に次の問題へ進む
+      const missed = remainingQuestions.shift();
+      remainingQuestions.push(missed);
+      
+      // 0.8秒後に次の問題へ（ブブー音を聞かせる時間）
+      setTimeout(() => {
+        nextQuestion();
+      }, 800);
+    }
+  }
+
+  function playSound(type) {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      
+      if (type === 'correct') {
+        osc.type = 'sine'; 
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime);
+        osc.frequency.setValueAtTime(2093.00, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(); osc.stop(ctx.currentTime + 0.4);
+      } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+        osc.start(); osc.stop(ctx.currentTime + 0.3);
+      } else if (type === 'fanfare') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+        osc.start(); osc.stop(ctx.currentTime + 0.8);
+      }
+    } catch(e) {}
+  }
+
+  // ヘッダー制御
+  function toggleGlobalHeaderGame() {
+    const screen = document.querySelector('.kuku-game-screen');
+    if (screen && getComputedStyle(screen).display !== 'none') {
+      document.body.classList.add('kuku-game-active');
+    } else {
+      document.body.classList.remove('kuku-game-active');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const observer = new MutationObserver(toggleGlobalHeaderGame);
+    const screen = document.querySelector('.kuku-game-screen');
+    if (screen) observer.observe(screen, { attributes: true, attributeFilter: ['style'] });
+
+    document.addEventListener('kuku-test-start', (e) => {
+      initGame(e.detail.dan);
+    });
+
+    document.getElementById('game-reset').addEventListener('click', () => {
+      if(sorobanGame) sorobanGame.setValue(0);
+    });
+    
+    document.getElementById('game-answer').addEventListener('click', () => {
+      checkAnswer();
+    });
+  });
+</script>
