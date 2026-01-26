@@ -1,8 +1,25 @@
 /**
  * gameController.js
- * そろばん表示のはみ出し防止（aspect-ratio対応版）
+ * そろばん枠常時表示＆TestZero座標系準拠版
  */
 import { LEVELS, RESULT_MESSAGES } from './levelConfig.js';
+
+// 画像の縦横比（dodai.pngの形状に合わせる）
+const ABACUS_ASPECT_RATIO = 0.85;
+
+// TestZero（シミュレーター）の座標・サイズ設定
+const TEST_ZERO_CONFIG = {
+  ROD_X: [11.6, 36.2, 61.2, 85.8],
+  TAMA_WIDTH: 20.0,
+  TAMA_OFFSET: 9.0,
+  Y: {
+    upperRest: 4.0,
+    upperActive: 13.0,
+    lowerRest: 83.0,
+    lowerActiveStart: 30.5,
+    lowerGap: 13
+  }
+};
 
 function getElementSafely(id) {
   return document.getElementById(id);
@@ -12,12 +29,6 @@ function validateDigit(num) {
   const n = Number(num);
   if (isNaN(n) || n < 0 || n > 9) return null;
   return n;
-}
-
-function setupImageErrorHandler(img) {
-  img.onerror = () => {
-    console.error("画像読み込みに失敗:", img.src);
-  };
 }
 
 export class GameController {
@@ -42,16 +53,10 @@ export class GameController {
     this.enterButton = getElementSafely("enter-btn");
     this.instructionText = getElementSafely("instruction-text");
     
-    // 座標設定
-    this.ROD_X = [11.6, 36.2, 61.2, 85.8];
-    this.TAMA_WIDTH = 20.0;
-    this.TAMA_OFFSET = 9.0;
-    
-    this.Y = {
-      upperRest: 4.0, upperActive: 13.0,
-      lowerRest: 83.0, lowerActiveStart: 30.5, lowerGap: 13
-    };
-    
+    // SVG設定
+    this.SVG_WIDTH = 100; 
+    this.SVG_HEIGHT = 100 * ABACUS_ASPECT_RATIO;
+
     this.init();
   }
 
@@ -206,6 +211,9 @@ export class GameController {
        this.abacusDisplayContainer.innerHTML = '';
        this.abacusDisplayContainer.style.display = "flex";
        this.abacusDisplayContainer.style.height = "100%";
+       
+       // ★修正：カウントダウン中も「枠（土台）」だけ表示してレイアウト崩れを防ぐ
+       this.drawEmptyAbacus();
     }
     if(this.abacusArea) {
       this.abacusArea.style.display = "flex";
@@ -271,14 +279,19 @@ export class GameController {
     if (this.abacusDisplayContainer) {
       this.createAbacusDisplay(this.currentAnswer, digits);
       this.abacusDisplayContainer.style.display = "flex";
-      const abacusBase = this.abacusDisplayContainer.querySelector('.abacus-base');
-      if (abacusBase) abacusBase.style.opacity = "1";
+      const svg = this.abacusDisplayContainer.querySelector('svg');
+      if (svg) {
+        svg.style.transition = "opacity 0.2s ease";
+        svg.style.opacity = "1";
+      }
     }
 
     this.showTimeoutId = setTimeout(() => {
       if (this.abacusDisplayContainer) {
-        const abacusBase = this.abacusDisplayContainer.querySelector('.abacus-base');
-        if (abacusBase) abacusBase.style.opacity = "0";
+        // 時間切れになったら玉を隠すが、枠は残したい場合等はここで調整可能
+        // 現状は透明度0にする仕様
+        const svg = this.abacusDisplayContainer.querySelector('svg');
+        if (svg) svg.style.opacity = "0";
       }
       this.waitingAnswer = true;
     }, this.currentLevel.displayTime);
@@ -422,8 +435,8 @@ export class GameController {
     if (this.abacusDisplayContainer) {
       const digits = this.currentLevel.digits;
       this.createAbacusDisplay(this.currentAnswer, digits);
-      const abacusBase = this.abacusDisplayContainer.querySelector('.abacus-base');
-      if (abacusBase) abacusBase.style.opacity = "1";
+      const svg = this.abacusDisplayContainer.querySelector('svg');
+      if (svg) svg.style.opacity = "1";
     }
     
     this.setResultState(correct);
@@ -448,75 +461,109 @@ export class GameController {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
+  // ★追加：空のそろばん（枠のみ）を描画する関数
+  drawEmptyAbacus() {
+    if (!this.abacusDisplayContainer) return;
+    this.abacusDisplayContainer.innerHTML = '';
+    
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${this.SVG_WIDTH} ${this.SVG_HEIGHT}`);
+    svg.setAttribute("role", "presentation");
+
+    const dodaiImage = document.createElementNS(ns, "image");
+    dodaiImage.setAttribute("href", "/images/dodai.png");
+    dodaiImage.setAttribute("x", "0");
+    dodaiImage.setAttribute("y", "0");
+    dodaiImage.setAttribute("width", "100%");
+    dodaiImage.setAttribute("height", "100%");
+    dodaiImage.setAttribute("preserveAspectRatio", "none");
+    
+    svg.appendChild(dodaiImage);
+    this.abacusDisplayContainer.appendChild(svg);
+  }
+
+  // そろばん描画（通常時）
   createAbacusDisplay(value, digits) {
     if (!this.abacusDisplayContainer) return;
     this.abacusDisplayContainer.innerHTML = '';
-    const maxDigits = Math.max(digits, 4);
 
-    const abacusBase = document.createElement('div');
-    abacusBase.className = 'abacus-base';
+    const C = TEST_ZERO_CONFIG;
+    const ns = "http://www.w3.org/2000/svg";
     
-    // ★ここが重要修正ポイント！
-    // 縦横比（aspect-ratio）を指定して、親要素からはみ出ないように制御します
-    abacusBase.style.cssText = `
-      position: relative;
-      width: auto;
-      height: auto;
-      max-width: 100%;
-      max-height: 100%;
-      aspect-ratio: 500/415; /* そろばん画像の縦横比に合わせて設定 */
-      margin: 0 auto;
-    `;
-    
-    const dodai = document.createElement('img');
-    dodai.src = '/images/dodai.png';
-    dodai.alt = 'そろばんの土台';
-    dodai.className = 'dodai';
-    dodai.loading = 'eager';
-    dodai.style.cssText = 'display: block; width: 100%; height: 100%;';
-    setupImageErrorHandler(dodai);
-    abacusBase.appendChild(dodai);
-    
-    for (let col = 0; col < 4; col++) {
-      const leftPos = this.ROD_X[col] - this.TAMA_OFFSET;
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${this.SVG_WIDTH} ${this.SVG_HEIGHT}`);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", `そろばん: ${value}`);
+
+    // 土台
+    const dodaiImage = document.createElementNS(ns, "image");
+    dodaiImage.setAttribute("href", "/images/dodai.png");
+    dodaiImage.setAttribute("x", "0");
+    dodaiImage.setAttribute("y", "0");
+    dodaiImage.setAttribute("width", "100%");
+    dodaiImage.setAttribute("height", "100%");
+    dodaiImage.setAttribute("preserveAspectRatio", "none");
+    svg.appendChild(dodaiImage);
+
+    // 玉
+    const maxCols = 4;
+    for (let col = 0; col < maxCols; col++) {
+      const beadX = C.ROD_X[col] - C.TAMA_OFFSET;
+      const beadW = C.TAMA_WIDTH;
+      const beadH = beadW * 0.55; 
+
+      const digit = this.getDigit(value, digits, col);
+
+      // 五玉
+      const isUpperActive = digit >= 5;
+      const upperY_Percent = isUpperActive ? C.Y.upperActive : C.Y.upperRest;
+      const upperY = (upperY_Percent / 100) * this.SVG_HEIGHT;
       
-      const upperBead = document.createElement('img');
-      upperBead.src = '/images/tama.png';
-      upperBead.className = `tama upper U${col}`;
-      const upperY = this.getUpperY(value, maxDigits, col);
-      upperBead.style.cssText = `position: absolute; left: ${leftPos}%; top: ${upperY}%; width: ${this.TAMA_WIDTH}%; height: auto; transition: top 0.3s ease;`;
-      abacusBase.appendChild(upperBead);
-      
+      const upperBead = document.createElementNS(ns, "image");
+      upperBead.setAttribute("href", "/images/tama.png");
+      upperBead.setAttribute("x", beadX);
+      upperBead.setAttribute("y", upperY);
+      upperBead.setAttribute("width", beadW);
+      upperBead.setAttribute("height", beadH);
+      upperBead.style.transition = "y 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+      svg.appendChild(upperBead);
+
+      // 一玉
+      const remainder = digit % 5;
       for (let row = 0; row < 4; row++) {
-        const lowerBead = document.createElement('img');
-        lowerBead.src = '/images/tama.png';
-        lowerBead.className = `tama lower L${col}_${row}`;
-        const lowerY = this.getLowerY(value, maxDigits, col, row);
-        lowerBead.style.cssText = `position: absolute; left: ${leftPos}%; top: ${lowerY}%; width: ${this.TAMA_WIDTH}%; height: auto; transition: top 0.3s ease;`;
-        abacusBase.appendChild(lowerBead);
+        const isLowerActive = row < remainder;
+        let lowerY_Percent;
+        if (isLowerActive) {
+          lowerY_Percent = C.Y.lowerActiveStart + (row * C.Y.lowerGap);
+        } else {
+          lowerY_Percent = C.Y.lowerRest - ((3 - row) * C.Y.lowerGap);
+        }
+        
+        const lowerY = (lowerY_Percent / 100) * this.SVG_HEIGHT;
+
+        const lowerBead = document.createElementNS(ns, "image");
+        lowerBead.setAttribute("href", "/images/tama.png");
+        lowerBead.setAttribute("x", beadX);
+        lowerBead.setAttribute("y", lowerY);
+        lowerBead.setAttribute("width", beadW);
+        lowerBead.setAttribute("height", beadH);
+        lowerBead.style.transition = "y 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+        svg.appendChild(lowerBead);
       }
     }
-    this.abacusDisplayContainer.appendChild(abacusBase);
+
+    this.abacusDisplayContainer.appendChild(svg);
   }
 
   getDigit(value, digits, col) {
-    const str = value.toString().padStart(digits, "0");
+    const maxVisualDigits = 4;
+    const str = value.toString().padStart(maxVisualDigits, "0");
     const digitArray = Array.from(str).map(char => parseInt(char, 10));
     const rightToLeftIndex = 3 - col;
-    const arrayIndex = digits - 1 - rightToLeftIndex;
+    const arrayIndex = maxVisualDigits - 1 - rightToLeftIndex;
+
     return arrayIndex >= 0 && arrayIndex < digitArray.length ? digitArray[arrayIndex] : 0;
-  }
-
-  getUpperY(value, digits, col) {
-    const digit = this.getDigit(value, digits, col);
-    return digit >= 5 ? this.Y.upperActive : this.Y.upperRest;
-  }
-
-  getLowerY(value, digits, col, row) {
-    const digit = this.getDigit(value, digits, col);
-    const ones = digit % 5;
-    if (row < ones) return this.Y.lowerActiveStart + row * this.Y.lowerGap;
-    return this.Y.lowerRest - (3 - row) * this.Y.lowerGap;
   }
 }
 

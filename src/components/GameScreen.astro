@@ -1,6 +1,6 @@
 ---
 // GameScreen.astro
-// PCレイアウト崩れ防止・完全固定版
+// 問数表示のフォント修正版
 ---
 
 <div class="screen game-screen" data-screen="game" style="display: none;">
@@ -9,7 +9,7 @@
     <div class="game-header">
       <div class="status-bar">
         <span id="level-label" class="mini-badge">初級</span>
-        <span id="question-counter" class="mini-badge">1/10</span>
+        <span id="question-counter" class="mini-badge number-badge">1/10</span>
       </div>
       <button class="btn-back-mini" data-action="give-up">✕</button>
     </div>
@@ -77,7 +77,6 @@
     padding: 10px; box-sizing: border-box;
     display: flex; flex-direction: column;
     background: #faf8f5;
-    border: none; border-radius: 0; 
   }
 
   .game-header {
@@ -85,11 +84,21 @@
     margin-bottom: 5px; height: 40px; flex-shrink: 0;
   }
   .status-bar { display: flex; gap: 5px; }
+  
   .mini-badge {
     background: #e8d0b8; padding: 4px 8px; border-radius: 4px;
     font-size: 0.9rem; font-weight: bold; color: #5d4037;
     font-family: 'SorobanFont', sans-serif !important;
   }
+
+  /* ★ここが修正ポイント：問数カウンターだけ普通のフォントにする */
+  #question-counter {
+    /* 標準的なゴシック体を指定 */
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif !important;
+    font-size: 1rem; /* サイズも少し大きくして読みやすく */
+    letter-spacing: 0.5px;
+  }
+
   .btn-back-mini {
     background: #8b7e71; color: #fff; border: none; border-radius: 4px;
     width: 32px; height: 32px; font-weight: bold; cursor: pointer;
@@ -97,30 +106,48 @@
 
   /* --- レイアウト --- */
   .layout-wrapper {
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
     flex: 1; height: 100%; overflow: hidden; gap: 10px;
   }
 
-  /* スマホ用：均等割り */
+  /* そろばんエリア */
   .abacus-area {
-    flex: 1 1 50%; /* widthがなくても50%確保 */
+    flex: 1 1 50%;
     width: 100%;
-    position: relative; display: flex; justify-content: center; align-items: center;
-    background: #fff; border: 2px solid #d4c4b0; border-radius: 8px;
-    box-sizing: border-box; min-height: 0;
-  }
-  .abacus-wrapper {
-    width: 100%; height: 100%;
+    position: relative; 
     display: flex; justify-content: center; align-items: center;
-  }
-  #abacus-display-container {
-    width: 100%; height: 100%; min-height: 100px;
-    display: flex; align-items: center; justify-content: center;
+    min-height: 0;
   }
 
+  .abacus-wrapper {
+    width: 100%;
+    aspect-ratio: 100 / 85; 
+    max-width: 500px;
+    max-height: 100%;
+    display: flex; justify-content: center; align-items: center;
+  }
+
+  #abacus-display-container {
+    width: 100%;
+    height: 100%;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+  }
+  
+  :global(#abacus-display-container svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* キーパッドエリア */
   .keypad-area {
     flex: 1 1 50%;
     width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
     display: flex; flex-direction: column; gap: 8px; min-height: 0;
   }
 
@@ -145,7 +172,8 @@
   .answer-display {
     flex: 1;
     background: #fff; border: 2px solid #f0e0c8; border-radius: 8px;
-    font-size: 2.5rem; padding: 0 10px;
+    font-size: 2.5rem;
+    padding: 0 10px;
     display: flex; align-items: center; justify-content: flex-end;
     overflow: hidden; white-space: nowrap; color: #4b3b30;
     transition: background-color 0.3s ease;
@@ -154,7 +182,8 @@
 
   :global(.answer-display.center-mode) { justify-content: center !important; }
   :global(.answer-display.success) {
-    background-color: #e8f5e9; border-color: #63c27b; color: #2e7d32;
+    background-color: #e8f5e9;
+    border-color: #63c27b; color: #2e7d32;
   }
   :global(.answer-display.error) {
     background-color: #ffebee; border-color: #ff7b7b; color: #c62828;
@@ -165,7 +194,8 @@
   }
   .scroll-btn {
     flex: 1; background: #f3e1d2; border: 1px solid #d4c4b0;
-    border-radius: 4px; font-size: 1.2rem; color: #5d4037;
+    border-radius: 4px; font-size: 1.2rem;
+    color: #5d4037;
   }
 
   .keypad {
@@ -173,7 +203,8 @@
   }
   .keypad-row { flex: 1; display: flex; gap: 6px; }
   .key-btn {
-    flex: 1; border: none; border-radius: 8px;
+    flex: 1;
+    border: none; border-radius: 8px;
     background: #fff8e6; border-bottom: 4px solid #e0d0b8;
     font-size: 1.8rem; font-weight: bold; color: #4b3b30;
     cursor: pointer; touch-action: manipulation;
@@ -184,26 +215,26 @@
   }
   .key-btn.action { font-size: 1.3rem; background: #e8d0b8; border-bottom-color: #cbb094; }
   .key-btn.enter { 
-    background: #ff9ecb; color: white; border-bottom-color: #ff7bb0; font-size: 1.3rem; 
+    background: #ff9ecb;
+    color: white; border-bottom-color: #ff7bb0; font-size: 1.3rem; 
   }
   :global(.key-btn.enter.next-mode) {
     background: #63c27b !important; border-bottom-color: #4da864 !important;
   }
 
-  /* --- ★PC対応：ここが修正ポイント --- */
   @media (min-width: 768px) {
     .layout-wrapper {
-      flex-direction: row; /* 横並び */
+      flex-direction: row;
       align-items: center;
       max-width: 1000px;
       margin: 0 auto;
     }
     .game-panel {
       padding: 20px; height: auto; min-height: 90vh;
-      border-radius: 16px; border: 1px solid #f0e0c8;
+      border-radius: 16px;
+      border: 1px solid #f0e0c8;
     }
     .abacus-area, .keypad-area {
-      /* ★重要：flex-basisを50%にし、高さも固定して潰れ防止 */
       flex: 1 1 50%;
       height: 550px;
       width: 100%;
