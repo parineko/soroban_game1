@@ -1,11 +1,13 @@
 ---
 // KukuGame.astro
-// ロジック修正版：間違えたらスキップして最後に再出題
+// 正解エフェクトをランダム化（文字化け回避＆飽き防止）
 ---
 
 <div class="screen kuku-game-screen" data-screen="kuku-game" style="display: none;">
   <div class="panel kuku-panel">
     
+    <div id="game-effect-layer" class="effect-layer"></div>
+
     <div class="kuku-header">
       <div class="dan-badge">
         <span id="game-dan-title">2 のだん</span>
@@ -30,13 +32,21 @@
         </div>
       </div>
 
-      <div class="kuku-controls-dual">
-        <button class="control-btn reset-btn" id="game-reset">
-          <span class="icon">🔄</span> ゼロ
-        </button>
-        <button class="control-btn answer-btn" id="game-answer">
-          こたえる ⭕
-        </button>
+      <div class="kuku-controls-wrapper">
+        <div class="kuku-controls-dual" id="game-controls-normal">
+          <button class="control-btn reset-btn" id="game-reset">
+            <span class="icon">🔄</span> ゼロ
+          </button>
+          <button class="control-btn answer-btn" id="game-answer">
+            こたえる ⭕
+          </button>
+        </div>
+
+        <div class="kuku-controls-single" id="game-controls-finished" style="display: none;">
+          <button class="control-btn next-dan-btn" id="game-next-dan">
+            つぎの だんへ Go! 🚀
+          </button>
+        </div>
       </div>
 
     </div>
@@ -44,14 +54,22 @@
 </div>
 
 <style>
-  /* --- ベーススタイル（KukuScreenと共通） --- */
   :global(body.kuku-game-active .app-header) { display: none !important; }
 
   .kuku-game-screen {
     width: 100%; height: 100dvh;
     display: flex; justify-content: center;
-    background-color: #fff0f5; /* テストモードは少しピンク背景 */
+    background-color: #fff0f5; 
     overflow: hidden;
+    position: relative;
+  }
+
+  .effect-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    display: flex; justify-content: center; align-items: center;
   }
 
   .kuku-panel {
@@ -61,6 +79,7 @@
     padding-bottom: max(10px, env(safe-area-inset-bottom));
     padding-left: 10px; padding-right: 10px;
     box-sizing: border-box; background: #fff;
+    z-index: 1;
   }
 
   .kuku-header {
@@ -69,8 +88,7 @@
   }
 
   .dan-badge {
-    background: #ff4081; /* 濃いピンク */
-    padding: 8px 20px; border-radius: 30px;
+    background: #ff4081; padding: 8px 20px; border-radius: 30px;
     color: white; font-size: 1.5rem; font-weight: bold;
     font-family: 'SorobanFont', sans-serif !important;
     box-shadow: 0 2px 0 #c51162;
@@ -87,7 +105,6 @@
     overflow: hidden; gap: 5px;
   }
 
-  /* 表エリア */
   .kuku-table-area {
     display: flex; gap: 15px; padding: 10px;
     background: #fff0f5; border-radius: 16px;
@@ -96,27 +113,23 @@
   }
   .kuku-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 
-  /* 問題行スタイル */
   :global(.game-row) {
     font-size: 1.4rem; color: #aaa; padding: 6px 0;
     text-align: center; background: #fff; border-radius: 8px;
     font-family: 'SorobanFont', sans-serif !important;
     line-height: 1.2;
   }
-  /* 現在の問題 */
   :global(.game-row.current) {
     background-color: #ffff8d; border: 2px solid #ffea00;
     color: #000; transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     font-weight: bold;
   }
-  /* 正解済み */
   :global(.game-row.solved) {
     color: #d81b60; font-weight: bold;
     background-color: #f8bbd0;
   }
 
-  /* 問題文 */
   .kuku-question-box {
     text-align: center; padding: 5px;
     flex-shrink: 0; min-height: 50px;
@@ -126,7 +139,6 @@
     font-size: 2.2rem; color: #c51162; margin: 0; font-weight: bold;
   }
 
-  /* そろばん */
   .kuku-abacus-area {
     flex: 1; width: 100%;
     display: flex; justify-content: center; align-items: center;
@@ -145,15 +157,14 @@
     max-height: 100%; max-width: 100%;
   }
 
-  /* ★ボタンエリア */
-  .kuku-controls-dual {
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px; 
-    flex-shrink: 0;
-    padding: 0 10px;
+  .kuku-controls-wrapper {
+    height: 80px; flex-shrink: 0;
+  }
+
+  .kuku-controls-dual, .kuku-controls-single {
+    width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
+    gap: 15px; padding: 0 10px; box-sizing: border-box;
   }
 
   .control-btn {
@@ -170,18 +181,57 @@
   }
 
   .reset-btn {
-    flex: 1; 
-    background: #fff176; color: #5d4037;
-    border-bottom: 4px solid #fbc02d;
-    max-width: 120px;
+    flex: 1; background: #fff176; color: #5d4037;
+    border-bottom: 4px solid #fbc02d; max-width: 120px;
   }
 
   .answer-btn {
-    flex: 2; 
-    background: linear-gradient(135deg, #ff80ab, #ff4081);
-    color: white;
-    border-bottom: 4px solid #c51162;
-    font-size: 1.5rem; 
+    flex: 2; background: linear-gradient(135deg, #ff80ab, #ff4081);
+    color: white; border-bottom: 4px solid #c51162; font-size: 1.5rem; 
+  }
+
+  .next-dan-btn {
+    width: 90%;
+    background: linear-gradient(135deg, #a8e6cf, #c8f0dd);
+    color: #2d5a3d;
+    border-bottom: 4px solid #7bc89c;
+    font-size: 1.5rem;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* エフェクト用クラス */
+  :global(.hanamaru) {
+    position: absolute;
+    font-size: 15rem;
+    /* 文字化け対策: 一般的なフォントを指定 */
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+    opacity: 0;
+    animation: stamp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+  }
+
+  @keyframes stamp {
+    0% { transform: scale(3) rotate(-20deg); opacity: 0; }
+    50% { transform: scale(0.8) rotate(-20deg); opacity: 1; }
+    70% { transform: scale(1.1) rotate(-20deg); }
+    100% { transform: scale(1) rotate(-20deg); opacity: 1; }
+  }
+
+  :global(.confetti) {
+    position: absolute;
+    width: 10px; height: 10px;
+    top: -10px;
+    z-index: 99;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(100vh) rotate(720deg); }
   }
 
   @media (min-width: 768px) {
@@ -196,7 +246,6 @@
 <script>
   import { KUKU_DATA } from '../scripts/kukuData.js';
 
-  // そろばん設定
   const GAME_DESIGN_CONFIG = {
     widthPerDigit: 60, height: 225, 
     colors: { frame: "#231815", rod: "#deb887", beam: "#e6e6e6", beamBorder: "#231815", dot: "#000000" },
@@ -205,12 +254,11 @@
   };
 
   let currentDan = 2;
-  let remainingQuestions = []; // 未正解の問題インデックスリスト
-  let currentQIndex = -1;      // 現在出題中の問題インデックス(0-8)
-  let solvedStatus = [];       // 正解済みフラグ
+  let remainingQuestions = []; 
+  let currentQIndex = -1;      
+  let solvedStatus = [];       
   let sorobanGame;
 
-  // --- そろばんエンジン ---
   class SorobanEngineGame {
     constructor(containerId, config) {
       this.container = document.getElementById(containerId);
@@ -318,16 +366,48 @@
     }
   }
 
+  // --- ★修正ポイント：ランダムエフェクト ---
+  function showCorrectEffect() {
+    const layer = document.getElementById('game-effect-layer');
+    const el = document.createElement('div');
+    el.className = 'hanamaru';
+    
+    // 子供が喜びそうなラッキーアイテムリスト
+    const successIcons = ['⭕', '⭐', '🌟', '✨', '🌸', '🌼', '🌻', '💯', '🏆', '🎉', '👑', '🦄', '🌈', '💎', '🍔'];
+    
+    // ランダムに1つ選ぶ
+    const icon = successIcons[Math.floor(Math.random() * successIcons.length)];
+    el.textContent = icon;
+    
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+
+  function showConfetti() {
+    const layer = document.getElementById('game-effect-layer');
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+    
+    for (let i = 0; i < 50; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      el.style.left = Math.random() * 100 + '%';
+      el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      el.style.opacity = Math.random();
+      layer.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+  }
+
   // --- ゲームロジック ---
   function initGame(dan) {
     currentDan = dan;
-    // 未正解リストを作成 (0〜8)
     remainingQuestions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    // シャッフルする（ランダム出題）
     shuffleArray(remainingQuestions);
-    
-    // 正解状況リセット
     solvedStatus = new Array(9).fill(false);
+    
+    document.getElementById('game-controls-normal').style.display = 'flex';
+    document.getElementById('game-controls-finished').style.display = 'none';
     
     if (!sorobanGame) {
       sorobanGame = new SorobanEngineGame('game-abacus-container', GAME_DESIGN_CONFIG);
@@ -349,20 +429,21 @@
     
     if (remainingQuestions.length === 0) {
       document.getElementById('game-reading-text').textContent = "すごい！ ぜんぶ クリア！ 💮";
+      
+      document.getElementById('game-controls-normal').style.display = 'none';
+      document.getElementById('game-controls-finished').style.display = 'flex';
+      
       playSound('fanfare');
+      showConfetti(); 
       return;
     }
 
-    // 次の問題
     currentQIndex = remainingQuestions[0]; 
     const questions = KUKU_DATA[currentDan];
     const q = questions[currentQIndex];
     
     document.getElementById('game-reading-text').textContent = `${q.read} ？`;
-    
-    // 現在の問題を目立たせる（再描画）
     renderTable(); 
-    
     sorobanGame.setValue(0);
   }
 
@@ -377,19 +458,16 @@
     
     questions.forEach((item, index) => {
       const div = document.createElement('div');
-      
       let text = "";
       let className = "game-row";
       
       if (solvedStatus[index]) {
-        // 正解済み
         text = `${item.q} ${item.a}`;
         className += " solved";
       } else {
-        // 未正解
         text = `${item.q} ？`;
         if (index === currentQIndex) {
-            className += " current"; // 今の問題
+            className += " current"; 
         }
       }
       
@@ -409,30 +487,24 @@
     const userVal = sorobanGame.currentValue;
 
     if (userVal === targetQ.a) {
-      // 正解！
       playSound('correct');
+      showCorrectEffect(); // ランダムエフェクト発動
       solvedStatus[currentQIndex] = true;
-      remainingQuestions.shift(); // 削除
+      remainingQuestions.shift(); 
       
       setTimeout(() => {
         nextQuestion();
-      }, 500); // すぐ次へ（テンポアップ）
+      }, 800); 
     } else {
-      // ★修正：不正解でもスキップする！
       playSound('wrong'); 
-      
-      // アニメーション（揺らす）
       const box = document.querySelector('.kuku-question-box');
       box.style.transform = "translateX(10px)";
       setTimeout(() => box.style.transform = "translateX(-10px)", 50);
       setTimeout(() => box.style.transform = "none", 100);
 
-      // ★ここが変更点：
-      // 間違えた問題をリストの「最後」に回して、強制的に次の問題へ進む
       const missed = remainingQuestions.shift();
       remainingQuestions.push(missed);
       
-      // 0.8秒後に次の問題へ（ブブー音を聞かせる時間）
       setTimeout(() => {
         nextQuestion();
       }, 800);
@@ -475,7 +547,6 @@
     } catch(e) {}
   }
 
-  // ヘッダー制御
   function toggleGlobalHeaderGame() {
     const screen = document.querySelector('.kuku-game-screen');
     if (screen && getComputedStyle(screen).display !== 'none') {
@@ -500,6 +571,12 @@
     
     document.getElementById('game-answer').addEventListener('click', () => {
       checkAnswer();
+    });
+
+    document.getElementById('game-next-dan').addEventListener('click', () => {
+      let nextDan = currentDan + 1;
+      if (nextDan > 9) nextDan = 1;
+      initGame(nextDan);
     });
   });
 </script>

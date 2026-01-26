@@ -1,11 +1,13 @@
 ---
 // KukuScreen.astro
-// 文字サイズ特大＆そろばん最大化＆グローバルヘッダー非表示版
+// 演出ランダム化版
 ---
 
 <div class="screen kuku-screen" data-screen="kuku" style="display: none;">
   <div class="panel kuku-panel">
     
+    <div id="kuku-effect-layer" class="effect-layer"></div>
+
     <div class="kuku-header">
       <div class="dan-badge">
         <span id="current-dan-title">2 のだん</span>
@@ -16,7 +18,9 @@
     <div class="kuku-content">
       
       <div class="kuku-table-area">
-        <div id="kuku-col-left" class="kuku-col"></div> <div id="kuku-col-right" class="kuku-col"></div> </div>
+        <div id="kuku-col-left" class="kuku-col"></div>
+        <div id="kuku-col-right" class="kuku-col"></div>
+      </div>
 
       <div class="kuku-reading-box">
         <p id="kuku-reading-text" class="reading-text">に さん が ？</p>
@@ -43,232 +47,166 @@
 </div>
 
 <style>
-  /* --- グローバルヘッダーを消すおまじない --- */
-  /* この画面が表示されている時は、アプリ全体のヘッダーを非表示にする */
   :global(body.kuku-active .app-header) {
     display: none !important;
   }
   
-  /* 画面全体 */
   .kuku-screen {
-    width: 100%;
-    height: 100dvh;
-    display: flex;
-    justify-content: center;
-    background-color: #fcf8f2;
-    overflow: hidden;
+    width: 100%; height: 100dvh;
+    display: flex; justify-content: center;
+    background-color: #fcf8f2; overflow: hidden;
+    position: relative;
+  }
+
+  .effect-layer {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 100;
+    display: flex; justify-content: center; align-items: center;
   }
 
   .kuku-panel {
-    width: 100%;
-    max-width: 600px; /* PCでは少し幅広に */
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    /* セーフエリア対応 */
+    width: 100%; max-width: 600px; height: 100%;
+    display: flex; flex-direction: column;
     padding-top: max(10px, env(safe-area-inset-top));
     padding-bottom: max(10px, env(safe-area-inset-bottom));
-    padding-left: 10px;
-    padding-right: 10px;
-    box-sizing: border-box;
-    background: #fff;
+    padding-left: 10px; padding-right: 10px;
+    box-sizing: border-box; background: #fff; z-index: 1;
   }
 
-  /* 1. ヘッダー */
   .kuku-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-    flex-shrink: 0;
-    height: 50px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5px; flex-shrink: 0; height: 50px;
   }
 
   .dan-badge {
-    background: #ff8a80;
-    padding: 8px 20px;
-    border-radius: 30px;
-    color: white;
-    font-size: 1.5rem; /* 大きく */
-    font-weight: bold;
+    background: #ff8a80; padding: 8px 20px; border-radius: 30px;
+    color: white; font-size: 1.5rem; font-weight: bold;
     font-family: 'SorobanFont', sans-serif !important;
     box-shadow: 0 2px 0 #e57373;
   }
 
   .btn-back-mini {
-    background: #8b7e71;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    padding: 8px 16px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
+    background: #8b7e71; color: #fff; border: none;
+    border-radius: 12px; padding: 8px 16px;
+    font-size: 1.1rem; font-weight: bold; cursor: pointer;
   }
 
-  /* コンテンツ配置 */
   .kuku-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    gap: 5px;
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; gap: 5px;
   }
 
-  /* 2. 九九表エリア (文字大きく、高さはなりゆき) */
   .kuku-table-area {
-    display: flex;
-    gap: 15px;
-    padding: 10px;
-    background: #fffbf0;
-    border-radius: 16px;
+    display: flex; gap: 15px; padding: 10px;
+    background: #fffbf0; border-radius: 16px;
     border: 3px solid #f0e0c8;
-    flex-shrink: 0; /* 縮まない */
-    flex-grow: 0;   /* 勝手に伸びない（余白を作らない） */
+    flex-shrink: 0; flex-grow: 0;
   }
 
-  .kuku-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+  .kuku-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 
-  /* 九九の行スタイル */
   :global(.kuku-item) {
-    font-size: 1.4rem; /* ★文字サイズアップ */
-    color: #d7ccc8;    /* 薄い色（未回答） */
-    padding: 6px 0;
-    text-align: center;
-    background: #fff;
-    border-radius: 8px;
+    font-size: 1.4rem; color: #d7ccc8; padding: 6px 0;
+    text-align: center; background: #fff; border-radius: 8px;
     font-family: 'SorobanFont', sans-serif !important;
     line-height: 1.2;
   }
-  
-  /* アクティブ（今の問題） */
   :global(.kuku-item.active) {
-    color: #d32f2f; /* 赤 */
-    font-weight: bold;
-    background-color: #ffcdd2;
-    border: 2px solid #ef5350;
-    transform: scale(1.05); /* 少し飛び出す */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    color: #d32f2f; font-weight: bold;
+    background-color: #ffcdd2; border: 2px solid #ef5350;
+    transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
-  
-  /* 完了済み */
   :global(.kuku-item.done) {
-    color: #388e3c; /* 緑 */
-    font-weight: bold;
-    opacity: 1; /* はっきり表示 */
+    color: #388e3c; font-weight: bold; opacity: 1;
   }
 
-  /* 3. 読み仮名エリア */
   .kuku-reading-box {
-    text-align: center;
-    padding: 5px;
-    flex-shrink: 0;
-    min-height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    text-align: center; padding: 5px; flex-shrink: 0; min-height: 50px;
+    display: flex; align-items: center; justify-content: center;
   }
-
   .reading-text {
-    font-size: 2.2rem; /* ★特大サイズ */
-    color: #d84315;
-    margin: 0;
-    font-weight: bold;
-    letter-spacing: 2px;
+    font-size: 2.2rem; color: #d84315; margin: 0; font-weight: bold; letter-spacing: 2px;
   }
 
-  /* 4. そろばんエリア (ここを最大化！) */
   .kuku-abacus-area {
-    flex: 1; /* ★残りのスペースを全部使う！ */
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 0; /* おまじない */
-    padding: 10px 0;
+    flex: 1; width: 100%;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 0; padding: 10px 0;
   }
-
   .abacus-wrapper {
-    width: 100%;
-    height: 100%;
-    /* 横長になりすぎないよう制限しつつ、基本は大きく */
-    max-width: 600px;
-    display: flex; 
-    justify-content: center; 
-    align-items: center;
+    width: 100%; height: 100%; max-width: 600px;
+    display: flex; justify-content: center; align-items: center;
   }
-
   #kuku-abacus-container {
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
   }
-
   :global(#kuku-abacus-container svg) {
     width: 100%; height: 100%; display: block;
-    /* アスペクト比を維持しつつ最大化 */
-    max-height: 100%;
-    max-width: 100%;
+    max-height: 100%; max-width: 100%;
   }
 
-  /* 5. 操作ボタンエリア */
   .kuku-controls {
-    height: 70px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
+    height: 70px; display: flex; justify-content: center;
+    align-items: center; flex-shrink: 0;
   }
 
   .control-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 15px 40px; /* ボタン大きく */
-    border-radius: 40px;
-    border: none;
-    font-weight: bold;
-    font-size: 1.4rem; /* 文字も大きく */
-    cursor: pointer;
-    width: 90%;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; padding: 15px 40px; border-radius: 40px;
+    border: none; font-weight: bold; font-size: 1.4rem;
+    cursor: pointer; width: 90%;
     box-shadow: 0 5px 0 rgba(0,0,0,0.1);
     transition: transform 0.1s;
   }
   .control-btn:active {
-    transform: translateY(3px);
-    box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+    transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.1);
   }
 
   .reset-btn {
-    background: #ffe082;
-    color: #5d4037;
-    border-bottom: 4px solid #ffca28;
+    background: #ffe082; color: #5d4037; border-bottom: 4px solid #ffca28;
   }
 
   .next-dan-btn {
     background: linear-gradient(135deg, #a8e6cf, #c8f0dd);
-    color: #2d5a3d;
-    border-bottom: 4px solid #7bc89c;
-    animation: popIn 0.3s ease;
+    color: #2d5a3d; border-bottom: 4px solid #7bc89c;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
   @keyframes popIn {
-    0% { transform: scale(0.8); opacity: 0; }
+    0% { transform: scale(0.5); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* PC対応 */
+  /* エフェクト */
+  :global(.hanamaru) {
+    position: absolute;
+    font-size: 15rem;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+    opacity: 0;
+    animation: stamp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+  }
+  @keyframes stamp {
+    0% { transform: scale(3) rotate(-20deg); opacity: 0; }
+    50% { transform: scale(0.8) rotate(-20deg); opacity: 1; }
+    70% { transform: scale(1.1) rotate(-20deg); }
+    100% { transform: scale(1) rotate(-20deg); opacity: 1; }
+  }
+
+  :global(.confetti) {
+    position: absolute; width: 10px; height: 10px;
+    top: -10px; z-index: 99; animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(100vh) rotate(720deg); }
+  }
+
   @media (min-width: 768px) {
     .kuku-panel {
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      margin-top: 20px;
-      height: 95vh;
+      border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      margin-top: 20px; height: 95vh;
     }
   }
 </style>
@@ -288,7 +226,7 @@
   let currentStep = 1;
   let sorobanKuku;
 
-  // --- そろばんエンジン ---
+  // そろばんエンジン (省略なし)
   class SorobanEngineKuku {
     constructor(containerId, config, onChangeCallback) {
       this.container = document.getElementById(containerId);
@@ -395,6 +333,39 @@
     }
   }
 
+  // --- ★修正ポイント：ランダムエフェクト ---
+  function showCorrectEffect() {
+    const layer = document.getElementById('kuku-effect-layer');
+    const el = document.createElement('div');
+    el.className = 'hanamaru';
+    
+    // 子供が喜びそうなラッキーアイテムリスト
+    const successIcons = ['⭕', '⭐', '🌟', '✨', '🌸', '🌼', '🌻', '💯', '🏆', '🎉', '👑', '🦄', '🌈', '💎', '🍔'];
+    
+    // ランダムに1つ選ぶ
+    const icon = successIcons[Math.floor(Math.random() * successIcons.length)];
+    el.textContent = icon;
+    
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+
+  function showConfetti() {
+    const layer = document.getElementById('kuku-effect-layer');
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+    
+    for (let i = 0; i < 50; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      el.style.left = Math.random() * 100 + '%';
+      el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      el.style.opacity = Math.random();
+      layer.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+  }
+
   // --- ゲームロジック ---
   function initKukuGame(dan) {
     currentDan = dan;
@@ -417,8 +388,7 @@
     
     const leftCol = document.getElementById('kuku-col-left');
     const rightCol = document.getElementById('kuku-col-right');
-    leftCol.innerHTML = ''; 
-    rightCol.innerHTML = '';
+    leftCol.innerHTML = ''; rightCol.innerHTML = '';
     
     const questions = KUKU_DATA[currentDan];
     
@@ -453,13 +423,16 @@
     const targetQ = questions[currentStep - 1];
     if (currentVal === targetQ.a) {
       playSound('correct');
+      showCorrectEffect(); // ランダムエフェクト
       setTimeout(() => {
         currentStep++;
         if (currentStep > 9) {
           renderGame();
           document.getElementById('kuku-reset-zero').style.display = 'none';
           document.getElementById('kuku-next-dan').style.display = 'flex';
+          
           playSound('fanfare');
+          showConfetti();
         } else {
           renderGame();
         }
@@ -495,10 +468,8 @@
     } catch(e) {}
   }
 
-  // --- ヘッダー制御 ---
   function toggleGlobalHeader() {
     const kukuScreen = document.querySelector('.kuku-screen');
-    // kuku-screenが表示されている場合のみ、bodyにkuku-activeクラスをつける
     if (kukuScreen && getComputedStyle(kukuScreen).display !== 'none') {
       document.body.classList.add('kuku-active');
     } else {
@@ -507,13 +478,10 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    // 監視設定
     const observer = new MutationObserver(toggleGlobalHeader);
     const screen = document.querySelector('.kuku-screen');
-    if (screen) {
-      observer.observe(screen, { attributes: true, attributeFilter: ['style'] });
-    }
-    toggleGlobalHeader(); // 初期実行
+    if (screen) observer.observe(screen, { attributes: true, attributeFilter: ['style'] });
+    toggleGlobalHeader(); 
 
     document.addEventListener('kuku-dan-selected', (e) => {
       initKukuGame(e.detail.dan);
