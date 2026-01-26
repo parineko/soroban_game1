@@ -1,35 +1,20 @@
 /**
  * gameController.js
- * 最強そろばんエンジン搭載版（スクロールズレ修正済み）
+ * 画面切り替え時のズレ防止・スクロールリセット対応版
  */
 import { RESULT_MESSAGES } from './levelConfig.js';
 
-/* --- デザイン設定 --- */
 const DESIGN_CONFIG = {
   widthPerDigit: 60,
   height: 225, 
-  
   colors: {
-    frame: "#231815",
-    rod: "#deb887",
-    beam: "#e6e6e6",
-    beamBorder: "#231815",
-    dot: "#000000"
+    frame: "#231815", rod: "#deb887", beam: "#e6e6e6",
+    beamBorder: "#231815", dot: "#000000"
   },
-  
-  bead: {
-    width: 60,
-    height: 32,
-    imgSrc: "/images/tama.png" 
-  },
-
+  bead: { width: 60, height: 32, imgSrc: "/images/tama.png" },
   y: {
-    upperRest: 10,
-    upperActive: 28,
-    beam: 60,
-    lowerBase: 91,
-    lowerGap: 31,
-    lowerActiveOffset: -19
+    upperRest: 10, upperActive: 28, beam: 60,
+    lowerBase: 91, lowerGap: 31, lowerActiveOffset: -19
   }
 };
 
@@ -45,12 +30,7 @@ function validateDigit(num) {
 
 export class GameController {
   constructor() {
-    this.gameSettings = {
-      digits: 3,
-      time: 2000,
-      questions: 10
-    };
-
+    this.gameSettings = { digits: 3, time: 2000, questions: 10 };
     this.currentAnswer = 0;
     this.questionIndex = 0;
     this.correctCount = 0;
@@ -59,7 +39,6 @@ export class GameController {
     this.waitingAnswer = false;
     this.isNextState = false; 
     
-    // DOM要素
     this.levelLabel = getElementSafely("level-label");
     this.questionCounter = getElementSafely("question-counter");
     this.answerDisplay = getElementSafely("answer-display");
@@ -110,7 +89,6 @@ export class GameController {
     });
   }
 
-  // ★修正ポイント：画面切り替え時にスクロール位置をリセット
   showScreen(screenName) {
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {
@@ -119,9 +97,9 @@ export class GameController {
     
     const targetScreen = document.querySelector(`[data-screen="${screenName}"]`);
     if (targetScreen) {
-      targetScreen.style.display = 'flex';
+      targetScreen.style.display = 'flex'; // ここでFlexを指定しているためCSS側の対応が必須
       
-      // ★ここを追加！画面の一番上に戻す
+      // ★追加：画面切り替え時にスクロール位置を一番上に戻す
       window.scrollTo(0, 0);
 
       if (screenName === 'game') {
@@ -212,15 +190,9 @@ export class GameController {
   }
 
   startLevel(digits, timeMs) {
-    this.gameSettings = {
-      digits: digits,
-      time: timeMs,
-      questions: 10
-    };
-
+    this.gameSettings = { digits: digits, time: timeMs, questions: 10 };
     this.displayDigits = 5; 
     this.SVG_WIDTH = this.displayDigits * DESIGN_CONFIG.widthPerDigit;
-    
     this.reset();
 
     if (this.levelLabel) {
@@ -302,7 +274,6 @@ export class GameController {
     
     if (this.abacusDisplayContainer) {
       this.createAbacusDisplay(this.currentAnswer, this.displayDigits);
-      
       const svg = this.abacusDisplayContainer.querySelector('svg');
       if (svg) {
         const beads = svg.querySelectorAll('image');
@@ -459,6 +430,7 @@ export class GameController {
     }
     
     if (this.abacusDisplayContainer) {
+      this.createAbacusDisplay(this.currentAnswer, this.displayDigits);
       const svg = this.abacusDisplayContainer.querySelector('svg');
       if (svg) {
          const beads = svg.querySelectorAll('image');
