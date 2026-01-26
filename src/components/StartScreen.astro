@@ -1,6 +1,6 @@
 ---
 // StartScreen.astro
-// タイトル画面：Flexbox完全対応版
+// 「くく」ボタン追加版
 ---
 
 <div class="screen start-screen" data-screen="start">
@@ -12,6 +12,8 @@
     </p>
     <div class="button-column">
       <button class="btn primary" data-action="go-level" aria-label="はじめる">はじめる 🎈</button>
+      <button class="btn accent" data-action="go-kuku" aria-label="くくであそぶ">くく（99）であそぶ 🍒</button>
+      
       <a href="/TestZero" class="btn" aria-label="そろばんシミュレーター">そろばんシミュレーター 💻</a>
     </div>
   </div>
@@ -20,11 +22,10 @@
 <style>
   .start-screen {
     width: 100%;
-    /* ★追加：JSからの display: flex 指定に対応するための記述 */
     height: 100%;
-    display: flex;       /* 初期状態もFlexにする */
-    justify-content: center; /* 横方向のど真ん中 */
-    align-items: center;     /* 縦方向のど真ん中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .panel {
@@ -32,7 +33,6 @@
     max-width: 500px;
     margin: 0 auto;
     padding: 20px;
-    /* パネル自体の高さ調整 */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -66,7 +66,7 @@
 
   .button-column .btn {
     width: auto;
-    min-width: 200px;
+    min-width: 240px;
     max-width: 100%;
     font-size: 1.2rem;
     padding: 16px 24px;
@@ -75,5 +75,16 @@
     justify-content: center;
     align-items: center;
     white-space: nowrap;
+  }
+  
+  /* くくボタン用の色（さくらんぼ色） */
+  .btn.accent {
+    background: linear-gradient(135deg, #ff8a80, #ffbcaf);
+    border-color: #ff5252;
+    color: #b71c1c;
+  }
+  .btn.accent:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
   }
 </style>

@@ -1,0 +1,101 @@
+---
+// KukuSelect.astro
+// 九九の段を選ぶ画面
+---
+
+<div class="screen kuku-select-screen" data-screen="kuku-select" style="display: none;">
+  <div class="panel">
+    <h2 class="section-title">どの だんで あそぶ？ 🍒</h2>
+    
+    <div class="dan-grid">
+      <button class="dan-btn" data-dan="2">2 のだん</button>
+      <button class="dan-btn" data-dan="3">3 のだん</button>
+      <button class="dan-btn" data-dan="4">4 のだん</button>
+      <button class="dan-btn" data-dan="5">5 のだん</button>
+      <button class="dan-btn" data-dan="6">6 のだん</button>
+      <button class="dan-btn" data-dan="7">7 のだん</button>
+      <button class="dan-btn" data-dan="8">8 のだん</button>
+      <button class="dan-btn" data-dan="9">9 のだん</button>
+    </div>
+
+    <div class="button-row">
+      <button class="btn sub-btn" data-action="back-start" aria-label="ホームに戻る">もどる 🏠</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .kuku-select-screen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+    color: #b71c1c;
+    margin-bottom: 30px;
+  }
+
+  .dan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2列 */
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 30px;
+  }
+
+  .dan-btn {
+    background: #fff;
+    border: 3px solid #ff8a80;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #b71c1c;
+    cursor: pointer;
+    transition: all 0.1s;
+    font-family: 'SorobanFont', sans-serif !important;
+  }
+
+  .dan-btn:active {
+    transform: scale(0.95);
+    background: #ffe6e6;
+  }
+  
+  /* 3列以上にする場合のPCレイアウト（任意） */
+  @media (min-width: 600px) {
+    .dan-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+</style>
+
+<script>
+  // 段選択ボタンの処理
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.dan-btn');
+    if (!btn) return;
+    
+    const dan = btn.getAttribute('data-dan');
+    if (dan) {
+      // 選択した段をlocalStorageなどに保存するか、
+      // 次の画面の初期化関数に渡す
+      // ここではカスタムイベントを発火させてKukuScreenに伝える
+      const event = new CustomEvent('kuku-dan-selected', { detail: { dan: parseInt(dan) } });
+      document.dispatchEvent(event);
+    }
+  });
+</script>

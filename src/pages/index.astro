@@ -1,26 +1,55 @@
 ---
 // index.astro
-// 全てのコンポーネントを読み込み、表示を切り替えるメインファイル
-import BaseLayout from '../layouts/BaseLayout.astro';
-import StartScreen from '../components/StartScreen.astro';
-import LevelSelect from '../components/LevelSelect.astro';
-import GameScreen from '../components/GameScreen.astro';
-import ResultScreen from '../components/ResultScreen.astro';
+// 九九選択画面の追加とルーティング更新
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StartScreen from "../components/StartScreen.astro";
+import LevelSelect from "../components/LevelSelect.astro";
+import GameScreen from "../components/GameScreen.astro";
+import ResultScreen from "../components/ResultScreen.astro";
+import KukuSelect from "../components/KukuSelect.astro"; // ★追加
+import KukuScreen from "../components/KukuScreen.astro";
 ---
 
-<BaseLayout showHeader={true}>
+<BaseLayout>
   <StartScreen />
   <LevelSelect />
   <GameScreen />
   <ResultScreen />
+  <KukuSelect /> <KukuScreen />
 </BaseLayout>
 
 <script>
-  import { GameController } from '../scripts/gameController.js';
-  
-  // DOMContentLoaded後にゲームコントローラーを初期化
-  document.addEventListener('DOMContentLoaded', () => {
-    new GameController();
-  });
-</script>
+  import "../scripts/gameController.js";
 
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.getAttribute('data-action');
+    if (!action) return;
+
+    if (action === 'go-kuku') {
+      showScreen('kuku-select'); // まず選択画面へ
+    } else if (action === 'back-start') {
+      showScreen('start');
+    } else if (action === 'back-kuku-select') {
+      showScreen('kuku-select'); // 九九画面から選択画面へ戻る
+    }
+    // ...他のアクションは既存通り
+  });
+
+  // 段が選択されたら九九画面へ遷移
+  document.addEventListener('kuku-dan-selected', () => {
+    showScreen('kuku');
+  });
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(el => {
+      el.style.display = 'none';
+    });
+    const target = document.querySelector(`[data-screen="${name}"]`);
+    if (target) {
+      target.style.display = 'flex';
+      window.scrollTo(0, 0);
+    }
+  }
+</script>

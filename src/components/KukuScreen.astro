@@ -1,0 +1,508 @@
+---
+// KukuScreen.astro
+// レイアウト完全修正版（そろばん上・リセット下・次へボタン実装）
+---
+
+<div class="screen kuku-screen" data-screen="kuku" style="display: none;">
+  <div class="panel kuku-panel">
+    
+    <div class="kuku-header">
+      <div class="dan-badge">
+        <span id="current-dan-title">2 のだん</span>
+      </div>
+      <button class="btn-back-mini" data-action="back-kuku-select">もどる 🏠</button>
+    </div>
+
+    <div class="kuku-content">
+      
+      <div class="kuku-table-area">
+        <div id="kuku-col-left" class="kuku-col"></div> <div id="kuku-col-right" class="kuku-col"></div> </div>
+
+      <div class="kuku-reading-box">
+        <p id="kuku-reading-text" class="reading-text">に さん が ？</p>
+      </div>
+
+      <div class="kuku-abacus-area">
+        <div class="abacus-wrapper">
+          <div id="kuku-abacus-container"></div>
+        </div>
+      </div>
+
+      <div class="kuku-controls">
+        <button class="control-btn reset-btn" id="kuku-reset-zero">
+          <span class="icon">🔄</span> ゼロにする
+        </button>
+        
+        <button class="control-btn next-dan-btn" id="kuku-next-dan" style="display: none;">
+          つぎの だんへ Go! 🚀
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  /* 画面全体 */
+  .kuku-screen {
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    background-color: #fcf8f2;
+    overflow: hidden;
+  }
+
+  .kuku-panel {
+    width: 100%;
+    max-width: 500px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    padding-bottom: calc(15px + env(safe-area-inset-bottom)); /* 下に少し余裕を */
+    box-sizing: border-box;
+    background: #fff;
+  }
+
+  /* 1. ヘッダー */
+  .kuku-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    flex-shrink: 0;
+    padding: 0 5px;
+  }
+
+  .dan-badge {
+    background: #ff8a80;
+    padding: 6px 12px;
+    border-radius: 20px;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    font-family: 'SorobanFont', sans-serif !important;
+    box-shadow: 0 2px 0 #e57373;
+    white-space: nowrap;
+  }
+
+  .btn-back-mini {
+    background: #8b7e71;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .kuku-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    gap: 5px;
+  }
+
+  /* 2. 九九表エリア (左右分割レイアウト) */
+  .kuku-table-area {
+    display: flex;
+    gap: 10px;
+    padding: 5px;
+    background: #fffbf0;
+    border-radius: 12px;
+    border: 2px solid #f0e0c8;
+    flex-shrink: 0; /* 縮ませない */
+  }
+
+  .kuku-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* JSで生成される行 */
+  :global(.kuku-item) {
+    font-size: 1.1rem;
+    color: #bcaaa4;
+    padding: 4px;
+    text-align: center;
+    background: #fff;
+    border-radius: 6px;
+    font-family: 'SorobanFont', sans-serif !important;
+    transition: all 0.2s;
+  }
+  
+  :global(.kuku-item.active) {
+    color: #d32f2f;
+    font-weight: bold;
+    background-color: #ffcdd2;
+    border: 2px solid #ef5350;
+    transform: scale(1.02);
+  }
+  
+  :global(.kuku-item.done) {
+    color: #388e3c;
+    background-color: #e8f5e9;
+    opacity: 0.8;
+  }
+
+  /* 3. 読み仮名エリア */
+  .kuku-reading-box {
+    text-align: center;
+    padding: 5px;
+    flex-shrink: 0;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reading-text {
+    font-size: 1.6rem;
+    color: #d84315;
+    margin: 0;
+    font-weight: bold;
+  }
+
+  /* 4. そろばんエリア (メイン) */
+  .kuku-abacus-area {
+    flex: 1; /* 余ったスペースを全部使う */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0;
+  }
+
+  .abacus-wrapper {
+    width: 100%;
+    height: 100%;
+    /* 本編と同じ比率 */
+    aspect-ratio: 100 / 85; 
+    max-height: 100%;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+  }
+
+  #kuku-abacus-container {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  :global(#kuku-abacus-container svg) {
+    width: 100%; height: 100%; display: block;
+  }
+
+  /* 5. 操作ボタンエリア (一番下) */
+  .kuku-controls {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 30px;
+    border-radius: 30px;
+    border: none;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 80%;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    transition: transform 0.1s;
+  }
+  .control-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+  }
+
+  /* リセットボタン */
+  .reset-btn {
+    background: #ffe082;
+    color: #795548;
+    border-bottom: 3px solid #ffca28;
+  }
+
+  /* 次へボタン */
+  .next-dan-btn {
+    background: linear-gradient(135deg, #a8e6cf, #c8f0dd);
+    color: #2d5a3d;
+    border-bottom: 3px solid #7bc89c;
+    animation: popIn 0.3s ease;
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* PC対応 (中央寄せ維持) */
+  @media (min-width: 768px) {
+    .kuku-panel {
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      border-radius: 16px;
+      height: 90vh; /* 少し余白を持たせる */
+      max-height: 800px;
+    }
+    .reading-text { font-size: 2rem; }
+    :global(.kuku-item) { font-size: 1.3rem; padding: 8px; }
+  }
+</style>
+
+<script>
+  import { KUKU_DATA } from '../scripts/kukuData.js';
+
+  // そろばん設定
+  const KUKU_DESIGN_CONFIG = {
+    widthPerDigit: 60, height: 225, 
+    colors: { frame: "#231815", rod: "#deb887", beam: "#e6e6e6", beamBorder: "#231815", dot: "#000000" },
+    bead: { width: 60, height: 32, imgSrc: "/images/tama.png" },
+    y: { upperRest: 10, upperActive: 28, beam: 60, lowerBase: 91, lowerGap: 31, lowerActiveOffset: -19 }
+  };
+
+  let currentDan = 2;
+  let currentStep = 1;
+  let sorobanKuku;
+
+  // --- そろばんエンジン ---
+  class SorobanEngineKuku {
+    constructor(containerId, config, onChangeCallback) {
+      this.container = document.getElementById(containerId);
+      this.config = config;
+      this.onChange = onChangeCallback;
+      this.currentValue = 0;
+      this.digits = 3; 
+      if (this.container) this.init();
+    }
+    init() {
+      this.container.innerHTML = '';
+      const C = this.config;
+      const totalWidth = this.digits * C.widthPerDigit;
+      const totalHeight = C.height;
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
+      svg.style.width = "100%"; svg.style.height = "100%";
+      this.drawBackground(svg, ns, totalWidth, totalHeight);
+      for (let col = 0; col < this.digits; col++) {
+        const cx = (col * C.widthPerDigit) + (C.widthPerDigit / 2);
+        const beadX = cx - (C.bead.width / 2);
+        const upperBead = this.createBead(ns, beadX, C.y.upperRest, `k-upper-${col}`);
+        upperBead.style.cursor = "pointer";
+        upperBead.addEventListener('click', () => this.handleBeadClick(col, 'upper', 0));
+        svg.appendChild(upperBead);
+        for (let row = 0; row < 4; row++) {
+          const lowerY = C.y.lowerBase + (row * C.y.lowerGap);
+          const lowerBead = this.createBead(ns, beadX, lowerY, `k-lower-${col}-${row}`);
+          lowerBead.style.cursor = "pointer";
+          lowerBead.addEventListener('click', () => this.handleBeadClick(col, 'lower', row));
+          svg.appendChild(lowerBead);
+        }
+      }
+      this.container.appendChild(svg);
+    }
+    drawBackground(svg, ns, w, h) {
+      const C = this.config;
+      const createRect = (x, y, w, h, f, s) => {
+        const r = document.createElementNS(ns, "rect");
+        r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", w); r.setAttribute("height", h); r.setAttribute("fill", f);
+        if(s) { r.setAttribute("stroke", s.color); r.setAttribute("stroke-width", s.width); }
+        return r;
+      };
+      svg.appendChild(createRect(0, 0, w, 10, C.colors.frame));
+      svg.appendChild(createRect(0, h-10, w, 10, C.colors.frame));
+      svg.appendChild(createRect(0, C.y.beam, w, 12, C.colors.beam, {color: C.colors.beamBorder, width: 1}));
+      for(let i=0; i<this.digits; i++) {
+        const cx = (i * C.widthPerDigit) + (C.widthPerDigit / 2);
+        const rod = createRect(cx-3, 10, 6, h-20, C.colors.rod);
+        svg.insertBefore(rod, svg.children[2]);
+        if(i === this.digits - 1) {
+           const dot = document.createElementNS(ns, "circle");
+           dot.setAttribute("cx", cx); dot.setAttribute("cy", C.y.beam + 6); dot.setAttribute("r", 3); dot.setAttribute("fill", C.colors.dot);
+           svg.appendChild(dot);
+        }
+      }
+    }
+    createBead(ns, x, y, id) {
+      const C = this.config;
+      const img = document.createElementNS(ns, "image");
+      img.setAttribute("href", C.bead.imgSrc);
+      img.setAttribute("x", x); img.setAttribute("y", y); img.setAttribute("width", C.bead.width); img.setAttribute("height", C.bead.height);
+      img.setAttribute("id", id);
+      img.style.transition = "y 0.1s ease-out";
+      return img;
+    }
+    handleBeadClick(col, type, row) {
+      const currentDigitVal = this.getDigitValue(this.currentValue, col);
+      let newDigitVal = currentDigitVal;
+      if (type === 'upper') { if (currentDigitVal >= 5) newDigitVal -= 5; else newDigitVal += 5; } else {
+        const currentOnes = currentDigitVal % 5;
+        const clickedPos = row;
+        if (clickedPos < currentOnes) newDigitVal = (currentDigitVal - currentOnes) + clickedPos; else newDigitVal = (currentDigitVal - currentOnes) + (clickedPos + 1);
+      }
+      this.updateDigitValue(col, newDigitVal);
+    }
+    updateDigitValue(col, newDigitVal) {
+      const strVal = this.currentValue.toString().padStart(this.digits, '0');
+      const chars = strVal.split('');
+      chars[col] = newDigitVal.toString();
+      const newValue = parseInt(chars.join(''), 10);
+      this.setValue(newValue);
+      if (this.onChange) this.onChange(newValue);
+    }
+    getDigitValue(val, col) {
+      const str = val.toString().padStart(this.digits, "0");
+      return parseInt(str[col], 10);
+    }
+    setValue(value) { this.currentValue = value; this.render(); }
+    render() {
+      const C = this.config;
+      const strVal = this.currentValue.toString().padStart(this.digits, "0");
+      for (let col = 0; col < this.digits; col++) {
+        const digit = parseInt(strVal[col], 10);
+        const upperBead = document.getElementById(`k-upper-${col}`);
+        if (upperBead) { const isUpperActive = digit >= 5; upperBead.setAttribute("y", isUpperActive ? C.y.upperActive : C.y.upperRest); }
+        const ones = digit % 5;
+        for (let row = 0; row < 4; row++) {
+          const lowerBead = document.getElementById(`k-lower-${col}-${row}`);
+          if (lowerBead) { const isLowerActive = row < ones; let targetY = isLowerActive ? (C.y.lowerBase + (row * C.y.lowerGap)) + C.y.lowerActiveOffset : C.y.lowerBase + (row * C.y.lowerGap); lowerBead.setAttribute("y", targetY); }
+        }
+      }
+    }
+  }
+
+  // --- ゲームロジック ---
+  function initKukuGame(dan) {
+    currentDan = dan;
+    currentStep = 1;
+    
+    // ボタンの状態リセット
+    document.getElementById('kuku-reset-zero').style.display = 'flex';
+    document.getElementById('kuku-next-dan').style.display = 'none';
+
+    if (!sorobanKuku) {
+      sorobanKuku = new SorobanEngineKuku('kuku-abacus-container', KUKU_DESIGN_CONFIG, (val) => {
+        checkAnswer(val);
+      });
+    }
+    sorobanKuku.setValue(0);
+    renderGame();
+  }
+
+  function renderGame() {
+    document.getElementById('current-dan-title').textContent = `${currentDan} のだん`;
+    
+    const leftCol = document.getElementById('kuku-col-left');
+    const rightCol = document.getElementById('kuku-col-right');
+    leftCol.innerHTML = ''; 
+    rightCol.innerHTML = '';
+    
+    const questions = KUKU_DATA[currentDan];
+    
+    questions.forEach((item, index) => {
+      const step = index + 1;
+      const div = document.createElement('div');
+      div.className = `kuku-item ${step === currentStep ? 'active' : ''} ${step < currentStep ? 'done' : ''}`;
+      
+      let text = item.q; 
+      if (step < currentStep) text += " " + item.a; // 完了したら答え表示
+      
+      div.textContent = text;
+      
+      // ★修正: 1〜5は左列、6〜9は右列に確実に分ける
+      if (step <= 5) leftCol.appendChild(div);
+      else rightCol.appendChild(div);
+    });
+
+    const currentQ = questions[currentStep - 1];
+    const readingEl = document.getElementById('kuku-reading-text');
+    
+    if (currentQ) {
+      readingEl.textContent = `${currentQ.read} ？`;
+    } else {
+      readingEl.textContent = "すごい！ クリア！ 💮";
+    }
+  }
+
+  function checkAnswer(currentVal) {
+    const questions = KUKU_DATA[currentDan];
+    if (currentStep > 9) return;
+
+    const targetQ = questions[currentStep - 1];
+    if (currentVal === targetQ.a) {
+      playSound('correct');
+      setTimeout(() => {
+        currentStep++;
+        if (currentStep > 9) {
+          // ★全問正解時の処理
+          renderGame();
+          // リセットボタンを隠して、次へボタンを表示
+          document.getElementById('kuku-reset-zero').style.display = 'none';
+          document.getElementById('kuku-next-dan').style.display = 'flex';
+          playSound('fanfare');
+        } else {
+          renderGame();
+        }
+      }, 500);
+    }
+  }
+
+  function playSound(type) {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      
+      if (type === 'correct') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(1046.50, ctx.currentTime);
+        osc.frequency.setValueAtTime(2093.00, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(); osc.stop(ctx.currentTime + 0.4);
+      } else if (type === 'fanfare') {
+        // 簡易ファンファーレ
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // ド
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // ミ
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // ソ
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3); // ド
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+        osc.start(); osc.stop(ctx.currentTime + 0.8);
+      }
+    } catch(e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('kuku-dan-selected', (e) => {
+      initKukuGame(e.detail.dan);
+    });
+
+    document.getElementById('kuku-reset-zero').addEventListener('click', () => {
+      if(sorobanKuku) sorobanKuku.setValue(0);
+    });
+
+    // ★追加: 次の段へ進む処理
+    document.getElementById('kuku-next-dan').addEventListener('click', () => {
+      let nextDan = currentDan + 1;
+      if (nextDan > 9) nextDan = 1; // 9の次は1へ（または終了画面でも可）
+      initKukuGame(nextDan);
+    });
+  });
+</script>
