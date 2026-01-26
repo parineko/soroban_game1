@@ -1,14 +1,15 @@
 ---
 // StartScreen.astro
-// 文言修正：「そろばんをよむ」「くくをおぼえる」
+// 文言修正：総合学習アプリとしての表紙
 ---
 
 <div class="screen start-screen" data-screen="start">
   <div class="panel">
     <p class="big-copy">こんにちは 👋</p>
     <p class="text">
-      そろばんの かずを よんで<br>
-      こたえを いれてみよう ✨
+      かずを よんだり<br>
+      くくを おぼえたり<br>
+      たのしく そろばんを まなぼう ✨
     </p>
     <div class="button-column">
       <button class="btn primary" data-action="go-level" aria-label="そろばんをよむ">
@@ -54,7 +55,7 @@
   .text {
     text-align: center;
     line-height: 1.8;
-    font-size: 1.5rem;
+    font-size: 1.4rem; /* 少し文字数増えたので調整 */
     color: var(--text-main);
     margin: 0 0 32px;
     font-weight: 500;
@@ -65,7 +66,7 @@
     flex-direction: column;
     gap: 16px;
     align-items: center;
-    margin-top: 20px;
+    margin-top: 10px;
     width: 100%;
   }
 
