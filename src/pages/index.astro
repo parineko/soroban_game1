@@ -1,55 +1,81 @@
 ---
 // index.astro
-// 九九選択画面の追加とルーティング更新
+// 画面切り替えの司令塔（完全版）
 import BaseLayout from "../layouts/BaseLayout.astro";
 import StartScreen from "../components/StartScreen.astro";
 import LevelSelect from "../components/LevelSelect.astro";
 import GameScreen from "../components/GameScreen.astro";
 import ResultScreen from "../components/ResultScreen.astro";
-import KukuSelect from "../components/KukuSelect.astro"; // ★追加
+import KukuSelect from "../components/KukuSelect.astro";
 import KukuScreen from "../components/KukuScreen.astro";
 ---
 
-<BaseLayout>
+<BaseLayout showHeader={false}>
   <StartScreen />
   <LevelSelect />
   <GameScreen />
   <ResultScreen />
-  <KukuSelect /> <KukuScreen />
+  <KukuSelect />
+  <KukuScreen />
 </BaseLayout>
 
 <script>
+  // ゲームロジックの読み込み
   import "../scripts/gameController.js";
 
+  // ページ読み込み時にゲームコントローラーを準備
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof window.GameController === 'function') {
+      new window.GameController();
+    }
+  });
+
+  // --- 画面遷移の集中管理 ---
   document.addEventListener('click', (e) => {
+    // クリックされた要素がボタンかどうかチェック
     const btn = e.target.closest('button');
     if (!btn) return;
+    
     const action = btn.getAttribute('data-action');
     if (!action) return;
 
-    if (action === 'go-kuku') {
-      showScreen('kuku-select'); // まず選択画面へ
+    // アクションに応じた画面切り替え
+    if (action === 'go-level') {
+      // 「そろばんをよむ」 -> レベル選択へ
+      showScreen('level');
+    } else if (action === 'go-kuku') {
+      // 「くくをおぼえる」 -> 段選択へ
+      showScreen('kuku-select');
     } else if (action === 'back-start') {
+      // 「もどる」 -> スタート画面へ
       showScreen('start');
+    } else if (action === 'back-level') {
+      // 結果画面などからレベル選択へ戻る
+      showScreen('level');
     } else if (action === 'back-kuku-select') {
-      showScreen('kuku-select'); // 九九画面から選択画面へ戻る
+      // 九九画面から段選択へ戻る
+      showScreen('kuku-select');
     }
-    // ...他のアクションは既存通り
+    // その他のボタン（retryなど）は各コンポーネント内のJSで処理されます
   });
 
-  // 段が選択されたら九九画面へ遷移
+  // 段が選択された時のイベント（KukuSelectから発火）
   document.addEventListener('kuku-dan-selected', () => {
     showScreen('kuku');
   });
 
+  // 画面切り替え関数
   function showScreen(name) {
+    // すべての画面を非表示
     document.querySelectorAll('.screen').forEach(el => {
       el.style.display = 'none';
     });
+    
+    // 指定された画面だけ表示
     const target = document.querySelector(`[data-screen="${name}"]`);
     if (target) {
-      target.style.display = 'flex';
-      window.scrollTo(0, 0);
+      target.style.display = 'flex'; // レイアウト崩れ防止のためflex指定
+      window.scrollTo(0, 0); // スクロール位置リセット
     }
   }
 </script>
