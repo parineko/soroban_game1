@@ -1,17 +1,29 @@
 ---
 // ResultScreen.astro
-// 結果画面コンポーネント
+// 結果画面コンポーネント（デザイン強化版）
 ---
 
 <div class="screen result-screen" data-screen="result" style="display: none;">
   <div class="panel">
-    <h2 class="section-title">けっか 💖</h2>
-    <p id="result-summary" class="result-summary"></p>
-    <p id="result-detail" class="result-detail"></p>
-    <div class="button-row">
-      <button class="btn primary" data-action="retry" aria-label="もういっかい">もういっかい 🎈</button>
-      <button class="btn" data-action="back-level" aria-label="れべるをかえる">れべるを かえる 🌿</button>
-      <button class="btn" data-action="back-start" aria-label="ホームに戻る">もどる 🏠</button>
+    <div class="result-card">
+      <h2 class="result-title">けっか はっぴょう 🎉</h2>
+      
+      <div class="score-container">
+        <p id="result-summary" class="result-summary">10もん せいかい！</p>
+        <div id="result-detail" class="result-detail">
+          </div>
+      </div>
+
+      <div class="action-area">
+        <button class="btn primary retry-btn" data-action="retry" aria-label="もういっかい">
+          もういっかい 🎈
+        </button>
+      </div>
+    </div>
+
+    <div class="sub-actions">
+      <button class="btn sub-btn" data-action="back-level" aria-label="設定を変える">せってい ⚙️</button>
+      <button class="btn sub-btn" data-action="back-start" aria-label="ホームに戻る">もどる 🏠</button>
     </div>
   </div>
 </div>
@@ -19,21 +31,83 @@
 <style>
   .result-screen {
     width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .result-card {
+    background: #fff;
+    border: 4px solid #ffb3d9;
+    border-radius: 24px;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(255, 179, 217, 0.3);
+    margin-bottom: 20px;
+  }
+
+  .result-title {
+    font-size: 1.5rem;
+    color: #8b3a5c;
+    margin: 0 0 20px;
+  }
+
+  .score-container {
+    margin-bottom: 30px;
   }
 
   .result-summary {
-    font-size: 2rem;
-    text-align: center;
-    margin: 4px 0 8px;
-    color: var(--text-main);
+    font-size: 1.2rem;
+    color: #5d4037;
+    margin: 0 0 10px;
     font-weight: bold;
   }
 
   .result-detail {
-    font-size: 1.5rem;
-    text-align: center;
-    color: var(--text-subtle);
-    margin-bottom: 16px;
+    color: #ff7bb0;
+    font-weight: bold;
+    line-height: 1.2;
+  }
+
+  .retry-btn {
+    width: 80%;
+    padding: 15px;
+    font-size: 1.4rem;
+    background: linear-gradient(135deg, #ff9ecb, #ffb3d9);
+    border: none;
+    border-bottom: 4px solid #ff7bb0;
+    border-radius: 12px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .retry-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+  }
+
+  .sub-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .sub-btn {
+    background: #f0e0c8;
+    border: 2px solid #d4c4b0;
+    color: #5d4037;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
   }
 </style>
-

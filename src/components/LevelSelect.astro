@@ -1,51 +1,49 @@
 ---
 // LevelSelect.astro
-// レベル選択画面コンポーネント
+// カスタム設定のみのシンプル版メニュー
 ---
 
 <div class="screen level-screen" data-screen="level" style="display: none;">
   <div class="panel">
-    <h2 class="section-title">れべるを えらんでね 🎀</h2>
-    <div class="level-list">
-      <button class="btn level-btn" data-level="easy" aria-label="しょきゅうレベルを選択">
-        しょきゅう 🌸<br>
-        <span class="level-note">（1けた・ひょうじ 2びょう）</span>
-      </button>
-      <button class="btn level-btn" data-level="normal" aria-label="ちゅうきゅうレベルを選択">
-        ちゅうきゅう 🌿<br>
-        <span class="level-note">（2けた・ひょうじ 1.5びょう）</span>
-      </button>
-      <button class="btn level-btn" data-level="hard" aria-label="じょうきゅうレベルを選択">
-        じょうきゅう ✨<br>
-        <span class="level-note">（3けた・ひょうじ 1びょう）</span>
-      </button>
-    </div>
+    <h2 class="section-title">せってい ⚙️</h2>
     
-    <div class="custom-level-section">
-      <h3 class="custom-title">カスタム設定 🎨</h3>
-      <div class="custom-controls">
-        <div class="custom-control">
-          <label for="custom-digits">けたすう：</label>
+    <div class="settings-container">
+      <div class="control-group">
+        <label for="custom-digits">けたすう</label>
+        <div class="select-wrapper">
           <select id="custom-digits" class="custom-select">
-            <option value="1">1けた</option>
-            <option value="2">2けた</option>
-            <option value="3">3けた</option>
-            <option value="4">4けた</option>
+            <option value="1">1 けた</option>
+            <option value="2">2 けた</option>
+            <option value="3" selected>3 けた</option>
+            <option value="4">4 けた</option>
+            <option value="5">5 けた</option>
           </select>
         </div>
-        <div class="custom-control">
-          <label for="custom-time">ひょうじ びょうすう：</label>
-          <input type="number" id="custom-time" class="custom-input" min="0.2" max="4" step="0.2" value="2.0">
-          <span class="custom-unit">びょう</span>
+      </div>
+
+      <div class="control-group">
+        <label for="custom-time">ひょうじ</label>
+        <div class="select-wrapper">
+          <select id="custom-time" class="custom-select">
+            <option value="3.0">3.0 びょう</option>
+            <option value="2.5">2.5 びょう</option>
+            <option value="2.0" selected>2.0 びょう</option>
+            <option value="1.5">1.5 びょう</option>
+            <option value="1.0">1.0 びょう</option>
+            <option value="0.5">0.5 びょう</option>
+          </select>
         </div>
       </div>
-      <button class="btn level-btn custom-btn" data-level="custom" id="custom-start-btn" aria-label="カスタム設定ではじめる">
-        カスタムで はじめる 🎨
+    </div>
+
+    <div class="action-area">
+      <button class="btn start-btn" id="custom-start-btn" aria-label="ゲームスタート">
+        スタート！ 🚀
       </button>
     </div>
     
     <div class="button-row">
-      <button class="btn" data-action="back-start" aria-label="ホームに戻る">もどる 🏠</button>
+      <button class="btn sub-btn" data-action="back-start" aria-label="ホームに戻る">もどる 🏠</button>
     </div>
   </div>
 </div>
@@ -53,128 +51,108 @@
 <style>
   .level-screen {
     width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
-  .level-list {
-    margin-top: 8px;
+  .panel {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
   }
 
-  .btn.level-btn {
-    width: auto;
-    min-width: 280px;
-    max-width: 400px;
-    margin: 0 auto 12px;
-    padding: 16px 32px;
-    display: block;
-  }
-
-  /* レベルごとの色分け */
-  .btn.level-btn[data-level="easy"] {
-    background: linear-gradient(135deg, #ffb3d9, #ffcce6);
-    border-color: #ff9ecb;
-    color: #8b3a5c;
-  }
-
-  .btn.level-btn[data-level="easy"]:hover {
-    background: linear-gradient(135deg, #ff9ecb, #ffb3d9);
-  }
-
-  .btn.level-btn[data-level="normal"] {
-    background: linear-gradient(135deg, #a8e6cf, #c8f0dd);
-    border-color: #7bc89c;
-    color: #2d5a3d;
-  }
-
-  .btn.level-btn[data-level="normal"]:hover {
-    background: linear-gradient(135deg, #7bc89c, #a8e6cf);
-  }
-
-  .btn.level-btn[data-level="hard"] {
-    background: linear-gradient(135deg, #ffd89b, #ffe5b8);
-    border-color: #ffc966;
-    color: #8b5a2b;
-  }
-
-  .btn.level-btn[data-level="hard"]:hover {
-    background: linear-gradient(135deg, #ffc966, #ffd89b);
-  }
-
-  .level-note {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--text-subtle);
-    margin-top: 4px;
-    font-weight: normal;
-  }
-
-  .custom-level-section {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 2px solid var(--border-soft);
-  }
-
-  .custom-title {
+  .section-title {
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1.8rem;
     color: var(--text-main);
-    margin: 0 0 16px;
+    margin-bottom: 30px;
   }
 
-  .custom-controls {
+  .settings-container {
+    background: #fff;
+    border: 2px solid #e0d0b8;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 20px;
   }
 
-  .custom-control {
+  .control-group {
     display: flex;
     align-items: center;
-    gap: 10px;
-    justify-content: center;
+    justify-content: space-between;
   }
 
-  .custom-control label {
-    font-size: 1rem;
+  .control-group label {
+    font-size: 1.2rem;
+    font-weight: bold;
     color: var(--text-main);
-    min-width: 140px;
-    text-align: right;
+  }
+
+  .select-wrapper {
+    position: relative;
+    width: 160px;
   }
 
   .custom-select {
-    padding: 8px 12px;
-    border-radius: 8px;
+    width: 100%;
+    padding: 12px;
+    font-size: 1.2rem;
     border: 2px solid #d4c4b0;
-    background: #fff9f0;
-    font-size: 1rem;
-    color: var(--text-main);
-    min-width: 120px;
-  }
-
-  .custom-input {
-    padding: 8px 12px;
     border-radius: 8px;
-    border: 2px solid #d4c4b0;
     background: #fff9f0;
-    font-size: 1rem;
-    color: var(--text-main);
-    width: 100px;
+    color: #5d4037;
+    font-weight: bold;
+    cursor: pointer;
     text-align: center;
+    appearance: none; /* デフォルトの矢印を消す */
   }
 
-  .custom-unit {
-    font-size: 1rem;
-    color: var(--text-main);
+  /* 矢印アイコンをCSSで作る */
+  .select-wrapper::after {
+    content: "▼";
+    font-size: 0.8rem;
+    color: #8b7e71;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
-  .btn.level-btn.custom-btn {
-    background: linear-gradient(135deg, #b8a9ff, #d4c8ff);
-    border-color: #9b88e8;
-    color: #4a3a6b;
+  .action-area {
+    margin-bottom: 16px;
   }
 
-  .btn.level-btn.custom-btn:hover {
-    background: linear-gradient(135deg, #9b88e8, #b8a9ff);
+  .btn.start-btn {
+    width: 100%;
+    padding: 20px;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #ff9ecb, #ffb3d9);
+    border: none;
+    border-bottom: 4px solid #ff7bb0;
+    border-radius: 12px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s, border-bottom 0.1s;
+  }
+
+  .btn.start-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+  }
+
+  .btn.sub-btn {
+    background: #f0e0c8;
+    color: #5d4037;
+    border: 1px solid #d4c4b0;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
   }
 </style>
-
