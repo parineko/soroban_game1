@@ -1,6 +1,6 @@
 ---
 // BaseLayout.astro
-// 共通レイアウト（タイトル折り返し防止版）
+// 共通レイアウト（PWAオフライン対応版）
 import '../styles/global.css';
 
 interface Props {
@@ -22,6 +22,23 @@ const { showHeader = true } = Astro.props;
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+
+  <script>
+    import { registerSW } from 'virtual:pwa-register';
+
+    // ブラウザがService Workerに対応していれば登録する
+    if ('serviceWorker' in navigator) {
+      registerSW({
+        immediate: true,
+        onNeedRefresh() {
+          console.log('新しいバージョンがあります。更新します。');
+        },
+        onOfflineReady() {
+          console.log('オフラインで遊べる準備ができました！');
+        },
+      });
+    }
+  </script>
   
 </head>
 <body>
@@ -64,8 +81,6 @@ const { showHeader = true } = Astro.props;
     margin: 0;
     font-family: 'Zen Maru Gothic', sans-serif;
     color: var(--text-main);
-    
-    /* ★修正：折り返しを禁止し、画面幅に応じてサイズを自動調整 */
     white-space: nowrap;
     font-size: clamp(1.2rem, 5vw, 1.8rem);
   }
