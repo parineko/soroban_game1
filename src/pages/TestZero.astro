@@ -1,6 +1,6 @@
 ---
 // TestZero.astro
-// ボタン文字はみ出し修正版
+// 完全スマホ特化レイアウト（テンキー最大化）
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
@@ -23,43 +23,42 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </div>
 
     <div class="layout-wrapper">
-      <div class="main-area">
-        <div id="abacus-area" class="abacus-area">
-          <div class="abacus-wrapper">
-            <div id="abacus-display-container"></div>
+      
+      <div id="abacus-area" class="abacus-area">
+        <div class="abacus-wrapper">
+          <div id="abacus-display-container"></div>
+        </div>
+      </div>
+
+      <div class="keypad-area">
+        <div class="answer-area">
+          <div id="answer-display" class="answer-display">0</div>
+          <div class="scroll-buttons">
+            <button class="scroll-btn" id="scroll-up" aria-label="数字を増やす">▲</button>
+            <button class="scroll-btn" id="scroll-down" aria-label="数字を減らす">▼</button>
           </div>
         </div>
 
-        <div class="keypad-area">
-          <div class="answer-area">
-            <div id="answer-display" class="answer-display">0</div>
-            <div class="scroll-buttons">
-              <button class="scroll-btn" id="scroll-up" aria-label="数字を増やす">▲</button>
-              <button class="scroll-btn" id="scroll-down" aria-label="数字を減らす">▼</button>
-            </div>
+        <div class="keypad">
+          <div class="keypad-row">
+            <button class="key-btn" data-key="7">7</button>
+            <button class="key-btn" data-key="8">8</button>
+            <button class="key-btn" data-key="9">9</button>
           </div>
-
-          <div class="keypad">
-            <div class="keypad-row">
-              <button class="key-btn" data-key="7">7</button>
-              <button class="key-btn" data-key="8">8</button>
-              <button class="key-btn" data-key="9">9</button>
-            </div>
-            <div class="keypad-row">
-              <button class="key-btn" data-key="4">4</button>
-              <button class="key-btn" data-key="5">5</button>
-              <button class="key-btn" data-key="6">6</button>
-            </div>
-            <div class="keypad-row">
-              <button class="key-btn" data-key="1">1</button>
-              <button class="key-btn" data-key="2">2</button>
-              <button class="key-btn" data-key="3">3</button>
-            </div>
-            <div class="keypad-row">
-              <button class="key-btn" data-key="0">0</button>
-              <button class="key-btn action" data-key="del">けす</button>
-              <button class="key-btn action" data-key="clear">クリア</button>
-            </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="4">4</button>
+            <button class="key-btn" data-key="5">5</button>
+            <button class="key-btn" data-key="6">6</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="1">1</button>
+            <button class="key-btn" data-key="2">2</button>
+            <button class="key-btn" data-key="3">3</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" data-key="0">0</button>
+            <button class="key-btn action" data-key="del">けす</button>
+            <button class="key-btn action" data-key="clear">クリア</button>
           </div>
         </div>
       </div>
@@ -325,23 +324,34 @@ function setupScrollButton(id, action) {
   /* 共通設定：スマホ（デフォルト） */
   .test-screen {
     width: 100%;
-    /* バー対策のdvhは維持 */
-    height: 100vh;
+    /* バー対策 */
     height: 100dvh; 
     overflow: hidden; 
     display: flex;
-    flex-direction: column;
+    justify-content: center;
+    background-color: #fcf8f2;
   }
 
   .game-panel {
-    flex: 1;
+    width: 100%;
+    max-width: 600px; /* PCでもスマホ幅に制限 */
+    height: 100%;
     padding: 10px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
     background: #faf8f5;
-    height: 100%;
     box-sizing: border-box;
+  }
+
+  /* PCで表示する際、パネル風に見せる設定 */
+  @media (min-width: 768px) {
+    .game-panel {
+      height: 95vh;
+      margin-top: 2.5vh;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
   }
 
   .game-header {
@@ -384,27 +394,15 @@ function setupScrollButton(id, action) {
     overflow: hidden;
   }
 
-  .feedback-area {
-    display: none;
-  }
-
-  /* メイン：そろばんエリア */
-  .main-area {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: 5px;
-    min-height: 0;
-  }
-
+  /* メイン：そろばんエリア（上部40%） */
   .abacus-area {
-    flex: 1 1 auto; 
+    height: 40%; /* 固定比率 */
+    width: 100%;
+    flex-shrink: 0;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    min-height: 0;
   }
 
   .abacus-wrapper {
@@ -423,25 +421,26 @@ function setupScrollButton(id, action) {
   }
 
   :global(#abacus-display-container svg) {
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
     display: block;
-    pointer-events: auto; 
   }
 
-  /* 下半分：操作エリア */
+  /* 下半分：テンキーエリア（残り全部） */
   .keypad-area {
+    flex: 1; /* 残りスペース最大化 */
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     margin: 0 auto;
-    display: flex; flex-direction: column; gap: 8px; min-height: 0;
-    flex-shrink: 0; 
+    display: flex; flex-direction: column; 
+    gap: 8px; 
+    min-height: 0;
   }
 
   .answer-area {
     display: flex;
     gap: 5px;
-    height: 60px;
+    height: 60px; /* 固定高さ */
     flex-shrink: 0;
   }
 
@@ -450,7 +449,7 @@ function setupScrollButton(id, action) {
     background: #fff;
     border: 2px solid #f0e0c8;
     border-radius: 8px;
-    font-size: 2rem;
+    font-size: 2.5rem; /* 大きく */
     text-align: right;
     padding-right: 10px;
     display: flex;
@@ -462,41 +461,41 @@ function setupScrollButton(id, action) {
   .scroll-buttons {
     display: flex;
     flex-direction: column;
-    width: 40px;
-    gap: 2px;
+    width: 50px;
+    gap: 4px;
   }
   .scroll-btn {
     flex: 1;
     background: #f3e1d2;
     border: 1px solid #d4c4b0;
-    border-radius: 4px;
-    font-size: 0.8rem;
+    border-radius: 6px;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
   }
 
+  /* キーパッド全体 */
   .keypad {
-    flex: 1;
+    flex: 1; /* 下まで伸ばす */
     display: flex;
     flex-direction: column;
-    gap: 6px; 
-    padding-bottom: 5px; 
+    gap: 6px;
+    padding-bottom: 5px;
   }
   .keypad-row {
-    flex: 1;
+    flex: 1; /* 均等に伸ばす */
     display: flex;
     gap: 6px;
-    min-height: 55px; 
   }
   .key-btn {
     flex: 1;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     background: #fff8e6;
-    border-bottom: 4px solid #e0d0b8; 
-    font-size: 1.8rem; /* 数字用のサイズ */
+    border-bottom: 4px solid #e0d0b8;
+    font-size: 2rem; /* 数字大きく */
     font-weight: bold;
     color: #4b3b30;
     touch-action: manipulation;
@@ -506,66 +505,12 @@ function setupScrollButton(id, action) {
     border-bottom-width: 2px;
     background: #f3e1d2;
   }
-
-  /* ★追加：文字ボタン用のスタイル（少し小さく、色味を変える） */
+  
+  /* 機能キー */
   .key-btn.action {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     background: #e8d0b8; 
     border-bottom-color: #cbb094;
-  }
-
-  /* --- ★PC対応 --- */
-  @media (min-width: 768px) {
-    .main-area {
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      gap: 30px;
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    
-    .game-panel {
-      padding: 20px;
-      height: 100vh;
-      border-radius: 0;
-      justify-content: center;
-    }
-
-    /* そろばん */
-    .abacus-area {
-      flex: 1.5;
-      height: auto;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end; 
-    }
-    
-    .abacus-wrapper {
-      width: 100%;
-      max-width: 600px;
-      aspect-ratio: auto;
-    }
-
-    /* テンキー：固定幅 */
-    .keypad-area {
-      flex: 1;
-      width: 340px; 
-      max-width: 340px;
-      height: auto;
-      margin: 0;
-      justify-content: flex-start;
-    }
-    
-    .keypad-row, .answer-area {
-      height: 60px;
-      flex: none;
-    }
-    
-    .test-screen {
-      overflow: hidden;
-    }
   }
 </style>
 </BaseLayout>
