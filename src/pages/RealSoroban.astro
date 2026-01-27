@@ -1,0 +1,360 @@
+---
+// src/pages/RealSoroban.astro
+// 調整用ガイド付き・ナビゲーション追加版
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout showHeader={false}>
+  
+  <div class="rotate-warning">
+    <p>📱 スマホを横に向けてください 🔄</p>
+  </div>
+
+  <div class="screen real-soroban-screen">
+    
+    <div class="control-header">
+      <button id="btn-reset" class="btn-action btn-reset" aria-label="ご破算">
+        🗑️ ご破算
+      </button>
+
+      <button id="btn-home" class="btn-action btn-home" aria-label="ホームに戻る">
+        🏠 もどる
+      </button>
+    </div>
+
+    <div id="abacus-container" class="abacus-container"></div>
+  
+  </div>
+</BaseLayout>
+
+<script>
+  /**
+   * PureSorobanEngine
+   * ユーザー調整用に構成を整理
+   */
+  class PureSorobanEngine {
+    constructor(containerId, config) {
+      this.container = document.getElementById(containerId);
+      this.config = config;
+      this.currentValue = 0; 
+      this.digits = config.digits || 13; 
+      if (this.container) this.init();
+    }
+
+    init() {
+      this.container.innerHTML = '';
+      const C = this.config;
+      const totalWidth = this.digits * C.widthPerDigit;
+      const totalHeight = C.height;
+      const ns = "http://www.w3.org/2000/svg";
+      
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
+      svg.style.width = "100%";
+      svg.style.height = "100%";
+      svg.style.touchAction = "none"; 
+
+      this.drawBackground(svg, ns, totalWidth, totalHeight);
+      this.drawBeads(svg, ns);
+      this.container.appendChild(svg);
+    }
+
+    drawBackground(svg, ns, w, h) {
+      const C = this.config;
+      const createRect = (x, y, width, height, fill, stroke) => {
+        const rect = document.createElementNS(ns, "rect");
+        rect.setAttribute("x", x); rect.setAttribute("y", y);
+        rect.setAttribute("width", width); rect.setAttribute("height", height);
+        rect.setAttribute("fill", fill);
+        if (stroke) {
+          rect.setAttribute("stroke", stroke.color);
+          rect.setAttribute("stroke-width", stroke.width);
+        }
+        return rect;
+      };
+
+      // 外枠（上下）
+      svg.appendChild(createRect(0, 0, w, 15, C.colors.frame));
+      svg.appendChild(createRect(0, h - 15, w, 15, C.colors.frame));
+      
+      // 梁（はり：白い棒）
+      svg.appendChild(createRect(0, C.y.beam, w, C.beamHeight, C.colors.beam, {color: C.colors.beamBorder, width: 1}));
+
+      // 桁（軸）と定位点（黒い点）
+      for(let i=0; i < this.digits; i++) {
+        const cx = (i * C.widthPerDigit) + (C.widthPerDigit / 2);
+        
+        // 軸（竹ひご）
+        const rod = createRect(cx - 3, 15, 6, h - 30, C.colors.rod);
+        svg.insertBefore(rod, svg.children[2]); 
+
+        // 定位点（黒い点）
+        // ★修正: 計算式ではなく、設定配列(dotColumns)に含まれている列にだけ打つ
+        if (C.dotColumns.includes(i)) {
+           const dot = document.createElementNS(ns, "circle");
+           dot.setAttribute("cx", cx);
+           // 点の縦位置：梁(beam)のY座標 + (梁の高さ / 2) = 梁のど真ん中
+           dot.setAttribute("cy", C.y.beam + (C.beamHeight / 2)); 
+           dot.setAttribute("r", 3.5);
+           dot.setAttribute("fill", C.colors.dot);
+           svg.appendChild(dot);
+        }
+      }
+    }
+
+    drawBeads(svg, ns) {
+      const C = this.config;
+      for (let col = 0; col < this.digits; col++) {
+        const cx = (col * C.widthPerDigit) + (C.widthPerDigit / 2);
+        const beadX = cx - (C.bead.width / 2);
+
+        // 五珠 (上の玉)
+        const upperBead = this.createBead(ns, beadX, C.y.upperRest, `upper-${col}`);
+        upperBead.addEventListener('pointerdown', (e) => this.handleInput(e, col, 'upper', 0));
+        svg.appendChild(upperBead);
+
+        // 一珠 (下の玉 4つ)
+        for (let row = 0; row < 4; row++) {
+          const lowerY = C.y.lowerBase + (row * C.y.lowerGap);
+          const lowerBead = this.createBead(ns, beadX, lowerY, `lower-${col}-${row}`);
+          lowerBead.addEventListener('pointerdown', (e) => this.handleInput(e, col, 'lower', row));
+          svg.appendChild(lowerBead);
+        }
+      }
+    }
+
+    createBead(ns, x, y, id) {
+      const C = this.config;
+      const img = document.createElementNS(ns, "image");
+      img.setAttribute("href", C.bead.imgSrc); 
+      img.setAttribute("x", x);
+      img.setAttribute("y", y);
+      img.setAttribute("width", C.bead.width);
+      img.setAttribute("height", C.bead.height);
+      img.setAttribute("id", id);
+      img.style.cursor = "pointer";
+      img.style.transition = "y 0.08s cubic-bezier(0.25, 1, 0.5, 1)"; 
+      return img;
+    }
+
+    handleInput(e, col, type, row) {
+      e.preventDefault();
+      const currentDigitVal = this.getDigitValue(this.currentValue, col);
+      let newDigitVal = currentDigitVal;
+      if (type === 'upper') {
+        if (currentDigitVal >= 5) newDigitVal -= 5; else newDigitVal += 5;
+      } else {
+        const currentOnes = currentDigitVal % 5;
+        const clickedPos = row; 
+        if (clickedPos < currentOnes) newDigitVal = (currentDigitVal - currentOnes) + clickedPos;
+        else newDigitVal = (currentDigitVal - currentOnes) + (clickedPos + 1);
+      }
+      this.updateDigitValue(col, newDigitVal);
+    }
+
+    getDigitValue(totalValue, col) {
+      const str = totalValue.toString().padStart(this.digits, "0");
+      return parseInt(str[col], 10);
+    }
+
+    updateDigitValue(col, newDigitVal) {
+      const strVal = this.currentValue.toString().padStart(this.digits, '0');
+      const chars = strVal.split('');
+      chars[col] = newDigitVal.toString();
+      const newValue = parseInt(chars.join(''), 10);
+      this.setValue(newValue);
+    }
+
+    setValue(value) {
+      const maxVal = Math.pow(10, this.digits) - 1;
+      this.currentValue = Math.min(Math.max(0, value), maxVal);
+      this.render();
+    }
+
+    render() {
+      const C = this.config;
+      const strVal = this.currentValue.toString().padStart(this.digits, "0");
+
+      for (let col = 0; col < this.digits; col++) {
+        const digit = parseInt(strVal[col], 10);
+        
+        // 五珠の動き
+        const upperBead = document.getElementById(`upper-${col}`);
+        if (upperBead) {
+          const isUpperActive = digit >= 5;
+          // ここで active（下がった状態）か rest（上がった状態）かを判定
+          upperBead.setAttribute("y", isUpperActive ? C.y.upperActive : C.y.upperRest);
+        }
+
+        // 一珠の動き
+        const ones = digit % 5;
+        for (let row = 0; row < 4; row++) {
+          const lowerBead = document.getElementById(`lower-${col}-${row}`);
+          if (lowerBead) {
+            const isLowerActive = row < ones;
+            let targetY;
+            if (isLowerActive) {
+              // 上がった状態（梁にくっつく）
+              targetY = (C.y.lowerBase + (row * C.y.lowerGap)) + C.y.lowerActiveOffset;
+            } else {
+              // 下がった状態（定位置）
+              targetY = C.y.lowerBase + (row * C.y.lowerGap);
+            }
+            lowerBead.setAttribute("y", targetY);
+          }
+        }
+      }
+    }
+  }
+
+  // ==========================================
+  // ▼▼▼ ここが数値をいじる場所です ▼▼▼
+  // ==========================================
+  const LANDSCAPE_CONFIG = {
+    digits: 13,         // 桁数（13桁）
+    widthPerDigit: 55,  // 1桁の幅（狭くすると全体が縮む）
+    height: 250,        // 画面全体の高さ基準
+
+    // 点を打つ列（0から始まる番号）
+    // 左端が0, 右端が12です。3桁区切りなら [0, 3, 6, 9, 12] になります。
+    dotColumns: [0, 3, 6, 9, 12], 
+
+    beamHeight: 16,     // 梁（白い棒）の太さ
+
+    colors: {
+      frame: "#231815", rod: "#d2b48c", beam: "#e6e6e6", 
+      beamBorder: "#231815", dot: "#000000"
+    },
+    bead: { width: 55, height: 32, imgSrc: "/images/tama.png" }, 
+    
+    // 【重要】位置調整（Y座標）
+    // 数値が小さいほど「上」、大きいほど「下」に動きます
+    y: {
+      // 1. 梁（白い棒）の縦位置
+      beam: 65, 
+
+      // 2. 五珠（上の玉）の設定
+      upperRest: 15,   // 上がっている時（数字0の時）の位置
+      upperActive: 33, // 下がっている時（数字5の時）の位置 ★梁にぶつからないよう調整
+
+      // 3. 一珠（下の玉）の設定
+      lowerBase: 108,   // 一番上の玉(1の玉)の「定位置」
+      lowerGap: 32,    // 玉と玉の間隔（玉の高さと同じくらいにする）
+      
+      // 4. 一珠が動く幅
+      // マイナス値にすると上に動きます。「-20」なら20px上に上がる
+      lowerActiveOffset: -27 
+    }
+  };
+
+  let realSoroban;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    realSoroban = new PureSorobanEngine('abacus-container', LANDSCAPE_CONFIG);
+    realSoroban.setValue(0);
+
+    // ご破算ボタン
+    const resetBtn = document.getElementById('btn-reset');
+    if(resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        realSoroban.setValue(0);
+      });
+    }
+
+    // ホームに戻るボタン
+    const homeBtn = document.getElementById('btn-home');
+    if(homeBtn) {
+      homeBtn.addEventListener('click', () => {
+        window.location.href = '/';
+      });
+    }
+  });
+</script>
+
+<style>
+  .real-soroban-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: #f5f0e6;
+    display: none; /* 横画面になったら flex になる */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  /* ヘッダー（ボタン置き場） */
+  .control-header {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    width: 100%;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between; /* 両端揃え（左にご破算、右にホーム） */
+    z-index: 100;
+    pointer-events: none; /* 透明部分はクリックを通す */
+  }
+
+  /* ボタン共通 */
+  .btn-action {
+    pointer-events: auto; /* ボタンはクリック可能 */
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    transition: transform 0.1s;
+    font-family: 'Zen Maru Gothic', sans-serif;
+  }
+  .btn-action:active {
+    transform: translateY(4px);
+    box-shadow: none;
+  }
+
+  /* 左：ご破算（赤） */
+  .btn-reset {
+    background: #c62828;
+    color: white;
+    border: 2px solid #8e0000;
+  }
+
+  /* 右：ホーム（青/グレー） */
+  .btn-home {
+    background: #5d4037;
+    color: white;
+    border: 2px solid #3e2723;
+  }
+
+  .abacus-container {
+    width: 95%;
+    height: 80%;
+    /* 影をつけて浮いている感を出す */
+    filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.2));
+  }
+
+  /* 縦画面の警告 */
+  @media (orientation: portrait) {
+    .rotate-warning {
+      display: flex;
+      width: 100vw; height: 100dvh;
+      justify-content: center; align-items: center;
+      background: #333; color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      position: fixed; top: 0; left: 0; z-index: 9999;
+    }
+    .real-soroban-screen { display: none; }
+  }
+
+  /* 横画面 */
+  @media (orientation: landscape) {
+    .rotate-warning { display: none; }
+    .real-soroban-screen { display: flex; }
+  }
+</style>

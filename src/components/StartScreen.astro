@@ -1,6 +1,6 @@
 ---
 // StartScreen.astro
-// 文言修正：総合学習アプリとしての表紙
+// トップ画面：メニューボタン一覧
 ---
 
 <div class="screen start-screen" data-screen="start">
@@ -11,6 +11,7 @@
       くくを おぼえたり<br>
       たのしく そろばんを まなぼう ✨
     </p>
+    
     <div class="button-column">
       <button class="btn primary" data-action="go-level" aria-label="そろばんをよむ">
         そろばんを よむ 📖
@@ -19,8 +20,16 @@
       <button class="btn accent" data-action="go-kuku" aria-label="くくをおぼえる">
         くくを おぼえる 🍒
       </button>
-      
-      <a href="/TestZero" class="btn" aria-label="そろばんシミュレーター">そろばんシミュレーター 💻</a>
+
+      <div class="divider"></div>
+
+      <a href="/TestZero" class="btn" aria-label="そろばんシミュレーター">
+        シミュレーター（たて） 📱
+      </a>
+
+      <a href="/RealSoroban" class="btn real-mode" aria-label="ほんもののそろばん">
+        ほんものの そろばん（よこ） 🧮
+      </a>
     </div>
   </div>
 </div>
@@ -32,6 +41,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow-y: auto; /* 画面が小さい時にスクロールできるように */
   }
 
   .panel {
@@ -55,42 +65,53 @@
   .text {
     text-align: center;
     line-height: 1.8;
-    font-size: 1.4rem; /* 少し文字数増えたので調整 */
+    font-size: 1.2rem;
     color: var(--text-main);
-    margin: 0 0 32px;
+    margin: 0 0 24px;
     font-weight: 500;
   }
 
   .button-column {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px; /* ボタン同士の間隔 */
     align-items: center;
-    margin-top: 10px;
     width: 100%;
+    padding-bottom: 20px;
   }
 
+  /* 区切り線 */
+  .divider {
+    width: 80%;
+    height: 2px;
+    background-color: #eaddcf;
+    margin: 8px 0;
+    border-radius: 2px;
+  }
+
+  /* ボタン共通設定 */
   .button-column .btn {
-    width: auto;
-    min-width: 260px;
-    max-width: 100%;
-    font-size: 1.2rem;
-    padding: 16px 24px;
-    text-decoration: none;
+    width: 100%; /* 親要素に合わせて広げる */
+    max-width: 320px; /* PCなどで広がりすぎないように */
+    font-size: 1.1rem;
+    padding: 14px 24px;
+    text-decoration: none; /* aタグの下線を消す */
     display: inline-flex;
     justify-content: center;
     align-items: center;
     white-space: nowrap;
-    border-radius: 12px;
+    border-radius: 16px;
     font-weight: bold;
     cursor: pointer;
     border: none;
-    transition: transform 0.1s;
+    transition: transform 0.1s, box-shadow 0.1s;
   }
 
   .btn:active {
     transform: translateY(2px);
   }
+
+  /* --- 色設定 --- */
 
   /* メインボタン（青系） */
   .btn.primary {
@@ -106,10 +127,22 @@
     box-shadow: 0 4px 10px rgba(255, 154, 158, 0.3);
   }
 
-  /* シミュレーターボタン（デフォルト） */
+  /* シミュレーター（既存） */
   .btn {
     background: #f0e0c8;
     color: #5d4037;
     border: 2px solid #d4c4b0;
+  }
+
+  /* ★新規: リアルそろばんボタン（木目・本格派っぽい色） */
+  .btn.real-mode {
+    background: #8d6e63; /* 落ち着いた茶色 */
+    color: #ffffff;
+    border: 2px solid #5d4037;
+    box-shadow: 0 4px 0 #5d4037; /* 立体的な影 */
+  }
+  .btn.real-mode:active {
+    box-shadow: none;
+    transform: translateY(4px);
   }
 </style>

@@ -1,6 +1,6 @@
 ---
-// index.astro
-// テストモード追加版
+// src/pages/index.astro
+// アプリ全体の構成とルーティング制御
 import BaseLayout from "../layouts/BaseLayout.astro";
 import StartScreen from "../components/StartScreen.astro";
 import LevelSelect from "../components/LevelSelect.astro";
@@ -8,7 +8,7 @@ import GameScreen from "../components/GameScreen.astro";
 import ResultScreen from "../components/ResultScreen.astro";
 import KukuSelect from "../components/KukuSelect.astro";
 import KukuScreen from "../components/KukuScreen.astro";
-import KukuGame from "../components/KukuGame.astro"; // ★追加
+import KukuGame from "../components/KukuGame.astro";
 ---
 
 <BaseLayout showHeader={false}>
@@ -18,20 +18,27 @@ import KukuGame from "../components/KukuGame.astro"; // ★追加
   <ResultScreen />
   <KukuSelect />
   <KukuScreen />
-  <KukuGame /> </BaseLayout>
+  <KukuGame />
+</BaseLayout>
 
 <script>
+  // ゲームロジックの読み込み
   import "../scripts/gameController.js";
 
+  // 初期化
   document.addEventListener('DOMContentLoaded', () => {
+    // 読み取りゲームのコントローラー初期化
     if (typeof window.GameController === 'function') {
       new window.GameController();
     }
   });
 
+  // 画面遷移イベントリスナー (SPA的な画面切り替え用)
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
+    
+    // data-action属性を持つボタンだけ処理する
     const action = btn.getAttribute('data-action');
     if (!action) return;
 
@@ -40,24 +47,32 @@ import KukuGame from "../components/KukuGame.astro"; // ★追加
     else if (action === 'back-start') showScreen('start');
     else if (action === 'back-level') showScreen('level');
     else if (action === 'back-kuku-select') showScreen('kuku-select');
+    // Note: シミュレーターとリアルそろばんは aタグ(href) で移動するためここには含まれない
   });
 
+  // 九九：段選択完了時のイベント
   document.addEventListener('kuku-dan-selected', () => {
-    showScreen('kuku'); // 覚えるモード
+    showScreen('kuku'); // 覚えるモードへ
   });
 
-  // ★追加：テストモード開始
+  // 九九：テストモード開始イベント
   document.addEventListener('kuku-test-start', () => {
-    showScreen('kuku-game'); // テストモード
+    showScreen('kuku-game'); // テストモードへ
   });
 
+  /**
+   * 画面切り替え関数
+   * すべての .screen を非表示にし、指定された data-screen を持つ要素だけ表示する
+   */
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(el => {
       el.style.display = 'none';
     });
+    
     const target = document.querySelector(`[data-screen="${name}"]`);
     if (target) {
       target.style.display = 'flex';
+      // 画面切り替え時にスクロール位置をリセット
       window.scrollTo(0, 0);
     }
   }
