@@ -1,6 +1,6 @@
 ---
 // src/pages/RealSoroban.astro
-// 調整用ガイド付き・ナビゲーション追加版
+// ユーザー調整値適用 + レイアウト崩れ防止版
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
@@ -13,13 +13,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <div class="screen real-soroban-screen">
     
     <div class="control-header">
-      <button id="btn-reset" class="btn-action btn-reset" aria-label="ご破算">
-        🗑️ ご破算
-      </button>
-
-      <button id="btn-home" class="btn-action btn-home" aria-label="ホームに戻る">
-        🏠 もどる
-      </button>
+      <div class="header-left">
+        <button id="btn-reset" class="btn-action btn-reset" aria-label="ご破算">
+          🗑️ ご破算
+        </button>
+      </div>
+      
+      <div class="header-right">
+        <button id="btn-fullscreen" class="btn-action btn-func" aria-label="全画面表示">
+          ⛶ 全画面
+        </button>
+        <button id="btn-home" class="btn-action btn-home" aria-label="ホームに戻る">
+          🏠 もどる
+        </button>
+      </div>
     </div>
 
     <div id="abacus-container" class="abacus-container"></div>
@@ -30,7 +37,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 <script>
   /**
    * PureSorobanEngine
-   * ユーザー調整用に構成を整理
+   * ユーザー調整済みの設定を適用
    */
   class PureSorobanEngine {
     constructor(containerId, config) {
@@ -50,6 +57,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       
       const svg = document.createElementNS(ns, "svg");
       svg.setAttribute("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
+      // アスペクト比を維持しつつ、コンテナいっぱいに広げる
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
       svg.style.width = "100%";
       svg.style.height = "100%";
       svg.style.touchAction = "none"; 
@@ -77,23 +86,21 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       svg.appendChild(createRect(0, 0, w, 15, C.colors.frame));
       svg.appendChild(createRect(0, h - 15, w, 15, C.colors.frame));
       
-      // 梁（はり：白い棒）
+      // 梁（はり）
       svg.appendChild(createRect(0, C.y.beam, w, C.beamHeight, C.colors.beam, {color: C.colors.beamBorder, width: 1}));
 
-      // 桁（軸）と定位点（黒い点）
+      // 桁と定位点
       for(let i=0; i < this.digits; i++) {
         const cx = (i * C.widthPerDigit) + (C.widthPerDigit / 2);
         
-        // 軸（竹ひご）
+        // 軸
         const rod = createRect(cx - 3, 15, 6, h - 30, C.colors.rod);
         svg.insertBefore(rod, svg.children[2]); 
 
-        // 定位点（黒い点）
-        // ★修正: 計算式ではなく、設定配列(dotColumns)に含まれている列にだけ打つ
+        // 定位点（指定された列のみ）
         if (C.dotColumns.includes(i)) {
            const dot = document.createElementNS(ns, "circle");
            dot.setAttribute("cx", cx);
-           // 点の縦位置：梁(beam)のY座標 + (梁の高さ / 2) = 梁のど真ん中
            dot.setAttribute("cy", C.y.beam + (C.beamHeight / 2)); 
            dot.setAttribute("r", 3.5);
            dot.setAttribute("fill", C.colors.dot);
@@ -108,12 +115,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         const cx = (col * C.widthPerDigit) + (C.widthPerDigit / 2);
         const beadX = cx - (C.bead.width / 2);
 
-        // 五珠 (上の玉)
+        // 五珠
         const upperBead = this.createBead(ns, beadX, C.y.upperRest, `upper-${col}`);
         upperBead.addEventListener('pointerdown', (e) => this.handleInput(e, col, 'upper', 0));
         svg.appendChild(upperBead);
 
-        // 一珠 (下の玉 4つ)
+        // 一珠
         for (let row = 0; row < 4; row++) {
           const lowerY = C.y.lowerBase + (row * C.y.lowerGap);
           const lowerBead = this.createBead(ns, beadX, lowerY, `lower-${col}-${row}`);
@@ -178,15 +185,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       for (let col = 0; col < this.digits; col++) {
         const digit = parseInt(strVal[col], 10);
         
-        // 五珠の動き
+        // 五珠
         const upperBead = document.getElementById(`upper-${col}`);
         if (upperBead) {
           const isUpperActive = digit >= 5;
-          // ここで active（下がった状態）か rest（上がった状態）かを判定
           upperBead.setAttribute("y", isUpperActive ? C.y.upperActive : C.y.upperRest);
         }
 
-        // 一珠の動き
+        // 一珠
         const ones = digit % 5;
         for (let row = 0; row < 4; row++) {
           const lowerBead = document.getElementById(`lower-${col}-${row}`);
@@ -194,10 +200,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             const isLowerActive = row < ones;
             let targetY;
             if (isLowerActive) {
-              // 上がった状態（梁にくっつく）
               targetY = (C.y.lowerBase + (row * C.y.lowerGap)) + C.y.lowerActiveOffset;
             } else {
-              // 下がった状態（定位置）
               targetY = C.y.lowerBase + (row * C.y.lowerGap);
             }
             lowerBead.setAttribute("y", targetY);
@@ -208,15 +212,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   }
 
   // ==========================================
-  // ▼▼▼ ここが数値をいじる場所です ▼▼▼
+  // ▼▼▼ ユーザー調整済み CONFIG ▼▼▼
   // ==========================================
   const LANDSCAPE_CONFIG = {
     digits: 13,         // 桁数（13桁）
-    widthPerDigit: 55,  // 1桁の幅（狭くすると全体が縮む）
+    widthPerDigit: 55,  // 1桁の幅
     height: 250,        // 画面全体の高さ基準
 
-    // 点を打つ列（0から始まる番号）
-    // 左端が0, 右端が12です。3桁区切りなら [0, 3, 6, 9, 12] になります。
+    // 点を打つ列
     dotColumns: [0, 3, 6, 9, 12], 
 
     beamHeight: 16,     // 梁（白い棒）の太さ
@@ -227,22 +230,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     },
     bead: { width: 55, height: 32, imgSrc: "/images/tama.png" }, 
     
-    // 【重要】位置調整（Y座標）
-    // 数値が小さいほど「上」、大きいほど「下」に動きます
+    // 【ユーザー調整値】
     y: {
       // 1. 梁（白い棒）の縦位置
       beam: 65, 
 
       // 2. 五珠（上の玉）の設定
-      upperRest: 15,   // 上がっている時（数字0の時）の位置
-      upperActive: 33, // 下がっている時（数字5の時）の位置 ★梁にぶつからないよう調整
+      upperRest: 15,   
+      upperActive: 33, 
 
       // 3. 一珠（下の玉）の設定
-      lowerBase: 108,   // 一番上の玉(1の玉)の「定位置」
-      lowerGap: 32,    // 玉と玉の間隔（玉の高さと同じくらいにする）
+      lowerBase: 108,   
+      lowerGap: 32,    
       
       // 4. 一珠が動く幅
-      // マイナス値にすると上に動きます。「-20」なら20px上に上がる
       lowerActiveOffset: -27 
     }
   };
@@ -253,7 +254,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     realSoroban = new PureSorobanEngine('abacus-container', LANDSCAPE_CONFIG);
     realSoroban.setValue(0);
 
-    // ご破算ボタン
+    // ご破算
     const resetBtn = document.getElementById('btn-reset');
     if(resetBtn) {
       resetBtn.addEventListener('click', () => {
@@ -261,84 +262,104 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       });
     }
 
-    // ホームに戻るボタン
+    // ホーム
     const homeBtn = document.getElementById('btn-home');
     if(homeBtn) {
       homeBtn.addEventListener('click', () => {
         window.location.href = '/';
       });
     }
+
+    // 全画面切り替え機能
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if(fsBtn) {
+      fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+          });
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      });
+    }
   });
 </script>
 
 <style>
+  /* --- 基本レイアウト（Flexboxで縦並びにする） --- */
   .real-soroban-screen {
     position: fixed;
     top: 0; left: 0;
     width: 100vw;
     height: 100dvh;
     background-color: #f5f0e6;
-    display: none; /* 横画面になったら flex になる */
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    
+    display: none; /* 横画面用 */
+    flex-direction: column; /* 上下に要素を並べる */
     overflow: hidden;
     touch-action: none;
   }
 
-  /* ヘッダー（ボタン置き場） */
+  /* --- 1. ヘッダーエリア（ボタン置き場） --- */
+  /* ここで高さを確保するのでボタンがそろばんに被らない */
   .control-header {
-    position: absolute;
-    top: 10px;
-    left: 0;
     width: 100%;
-    padding: 0 20px;
+    height: 60px; /* ボタンが収まる高さ */
+    flex-shrink: 0; /* 縮ませない */
     display: flex;
-    justify-content: space-between; /* 両端揃え（左にご破算、右にホーム） */
-    z-index: 100;
-    pointer-events: none; /* 透明部分はクリックを通す */
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    padding-left: max(16px, env(safe-area-inset-left));   /* ノッチ対策 */
+    padding-right: max(16px, env(safe-area-inset-right)); /* ノッチ対策 */
+    background: #eaddcf; /* 画面より少し濃い色で区切る（お好みで変更可） */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
   }
 
-  /* ボタン共通 */
+  .header-right {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* --- ボタン共通 --- */
   .btn-action {
-    pointer-events: auto; /* ボタンはクリック可能 */
     border: none;
     border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
+    padding: 6px 14px;
+    font-size: 0.85rem;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
     transition: transform 0.1s;
     font-family: 'Zen Maru Gothic', sans-serif;
+    white-space: nowrap;
   }
   .btn-action:active {
-    transform: translateY(4px);
+    transform: translateY(3px);
     box-shadow: none;
   }
 
-  /* 左：ご破算（赤） */
-  .btn-reset {
-    background: #c62828;
-    color: white;
-    border: 2px solid #8e0000;
-  }
+  /* 個別色設定 */
+  .btn-reset { background: #c62828; color: white; border: 2px solid #8e0000; }
+  .btn-home { background: #5d4037; color: white; border: 2px solid #3e2723; }
+  .btn-func { background: #f0f0f0; color: #333; border: 2px solid #ccc; } /* 全画面ボタン */
 
-  /* 右：ホーム（青/グレー） */
-  .btn-home {
-    background: #5d4037;
-    color: white;
-    border: 2px solid #3e2723;
-  }
-
+  /* --- 2. そろばんエリア --- */
+  /* ヘッダー以外の残りスペースを全て使う */
   .abacus-container {
-    width: 95%;
-    height: 80%;
-    /* 影をつけて浮いている感を出す */
-    filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.2));
+    flex: 1; /* 残り全部 */
+    width: 100%; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px 0; /* 上下に少しだけ隙間 */
   }
 
-  /* 縦画面の警告 */
+  /* --- 画面の向き制御 --- */
   @media (orientation: portrait) {
     .rotate-warning {
       display: flex;
@@ -352,7 +373,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .real-soroban-screen { display: none; }
   }
 
-  /* 横画面 */
   @media (orientation: landscape) {
     .rotate-warning { display: none; }
     .real-soroban-screen { display: flex; }
