@@ -1,18 +1,22 @@
 ---
 // KukuSelect.astro
-// 「覚える」と「テスト」の分岐を追加
+// 「覚える」と「テスト」の独立ボタン化 + 1の段追加
 ---
 
 <div class="screen kuku-select-screen" data-screen="kuku-select" style="display: none;">
   <div class="panel">
     <h2 class="section-title">どの だんで あそぶ？ 🍒</h2>
     
-    <div class="mode-switch">
-      <button class="mode-btn active" id="mode-learn">おぼえる 📖</button>
-      <button class="mode-btn" id="mode-test">テスト 🎲</button>
+    <div class="mode-selection">
+      <div class="mode-desc">モードをえらんでね👇</div>
+      <div class="mode-buttons">
+        <button class="mode-btn active" id="mode-learn">おぼえる 📖</button>
+        <button class="mode-btn" id="mode-test">テスト 🎲</button>
+      </div>
     </div>
     
     <div class="dan-grid">
+      <button class="dan-btn" data-dan="1">1 のだん</button>
       <button class="dan-btn" data-dan="2">2 のだん</button>
       <button class="dan-btn" data-dan="3">3 のだん</button>
       <button class="dan-btn" data-dan="4">4 のだん</button>
@@ -35,72 +39,77 @@
     display: flex; justify-content: center; align-items: center;
   }
   .panel {
-    width: 100%; max-width: 500px;
-    padding: 20px; display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 500px; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
   }
   .section-title {
-    font-size: 1.8rem; color: #b71c1c; margin-bottom: 20px;
+    font-size: 1.8rem; color: #b71c1c; margin-bottom: 10px;
   }
 
-  /* モード切替ボタン */
-  .mode-switch {
-    display: flex; gap: 10px; margin-bottom: 20px;
-    background: #e0e0e0; padding: 5px; border-radius: 30px;
+  .mode-selection {
+    width: 100%; text-align: center; margin-bottom: 20px;
+  }
+  .mode-desc {
+    font-size: 1.1rem; color: #795548; margin-bottom: 8px; font-weight: bold;
+  }
+  .mode-buttons {
+    display: flex; gap: 15px; justify-content: center;
   }
   .mode-btn {
-    padding: 10px 30px; border-radius: 25px; border: none;
-    font-size: 1.2rem; font-weight: bold; cursor: pointer;
-    background: transparent; color: #757575;
-    transition: all 0.2s;
+    flex: 1; padding: 12px 0; border-radius: 12px; border: 3px solid #ccc;
+    font-size: 1.3rem; font-weight: bold; cursor: pointer;
+    background: #fff; color: #888; transition: all 0.2s;
+    box-shadow: 0 4px 0 #ccc;
   }
-  .mode-btn.active {
-    background: #fff; color: #d81b60;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  .mode-btn:active {
+    transform: translateY(4px); box-shadow: 0 0 0 #ccc;
   }
-  /* テストモードがアクティブな時 */
+  
+  /* おぼえるモード選択時 */
+  .mode-btn#mode-learn.active {
+    border-color: #ff8a80; color: #d81b60; background: #ffebee;
+    box-shadow: 0 4px 0 #ff8a80;
+  }
+  .mode-btn#mode-learn.active:active { transform: translateY(4px); box-shadow: 0 0 0 #ff8a80; }
+
+  /* テストモード選択時 */
   .mode-btn#mode-test.active {
-    color: #1976d2;
+    border-color: #64b5f6; color: #1565c0; background: #e3f2fd;
+    box-shadow: 0 4px 0 #64b5f6;
   }
+  .mode-btn#mode-test.active:active { transform: translateY(4px); box-shadow: 0 0 0 #64b5f6; }
 
   .dan-grid {
     display: grid; grid-template-columns: repeat(2, 1fr);
     gap: 15px; width: 100%; margin-bottom: 30px;
   }
   .dan-btn {
-    background: #fff; border: 3px solid #ff8a80;
-    border-radius: 12px; padding: 15px;
+    background: #fff; border: 3px solid #ff8a80; border-radius: 12px; padding: 15px;
     font-size: 1.5rem; font-weight: bold; color: #b71c1c;
     cursor: pointer; font-family: 'SorobanFont', sans-serif !important;
   }
   .dan-btn:active { transform: scale(0.95); background: #ffe6e6; }
   
-  /* テストモード時のボタン色変化用クラス */
-  :global(.test-mode .dan-btn) {
-    border-color: #64b5f6; color: #0d47a1;
-  }
-  :global(.test-mode .dan-btn:active) {
-    background: #e3f2fd;
-  }
+  :global(.test-mode .dan-btn) { border-color: #64b5f6; color: #0d47a1; }
+  :global(.test-mode .dan-btn:active) { background: #e3f2fd; }
 
   .btn.sub-btn {
     background: #f0e0c8; color: #5d4037; border: 1px solid #d4c4b0;
-    padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight:bold;
   }
 </style>
 
 <script>
-  let currentMode = 'learn'; // 'learn' or 'test'
+  let currentMode = 'learn';
 
   const modeBtns = document.querySelectorAll('.mode-btn');
   const panel = document.querySelector('.kuku-select-screen .panel');
 
   modeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      // 見た目の切り替え
       modeBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       
-      // モード設定
       if (btn.id === 'mode-test') {
         currentMode = 'test';
         panel.classList.add('test-mode');
@@ -111,7 +120,6 @@
     });
   });
 
-  // 段ボタンクリック
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.dan-btn');
     if (!btn) return;
@@ -119,11 +127,9 @@
     const dan = btn.getAttribute('data-dan');
     if (dan) {
       if (currentMode === 'learn') {
-        // 覚えるモードへ
         const event = new CustomEvent('kuku-dan-selected', { detail: { dan: parseInt(dan) } });
         document.dispatchEvent(event);
       } else {
-        // ★テストモードへ (新しいイベント)
         const event = new CustomEvent('kuku-test-start', { detail: { dan: parseInt(dan) } });
         document.dispatchEvent(event);
       }
